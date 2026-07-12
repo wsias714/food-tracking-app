@@ -1,0 +1,14 @@
+{
+  "name": "Berry",
+  "short_name": "Berry",
+  "description": "A gentle food & nutrition tracker",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF4F1",
+  "theme_color": "#FBF4F1",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

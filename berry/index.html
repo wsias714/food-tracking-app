@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Berry</title>
+<meta name="theme-color" content="#FBF4F1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Berry">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #FBF4F1;
+  --card: #FFFFFF;
+  --ink: #43273A;
+  --ink-soft: #8A6B80;
+  --berry: #C2417A;
+  --berry-soft: #F5DCE8;
+  --sage: #7FA383;
+  --sage-soft: #E8F0E6;
+  --gold: #D9A441;
+  --gold-soft: #F7EDD9;
+  --iron: #8B5E7E;
+  --rose-off: #D98A9E;
+  --line: #F0DFE0;
+  --mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  --serif: 'Fraunces', Georgia, serif;
+  --body: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+}
+
+@keyframes pop { 0%{transform:scale(.92);opacity:.4} 100%{transform:scale(1);opacity:1} }
+@keyframes fadeUp { 0%{transform:translateY(6px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--bg);
+  font-family: var(--body);
+  color: var(--ink);
+  overscroll-behavior-y: none;
+}
+::-webkit-scrollbar { display: none; }
+button, input, select, textarea { font-family: inherit; }
+button { -webkit-appearance: none; appearance: none; }
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg);
+}
+.screen { flex: 1; overflow-y: auto; padding: env(safe-area-inset-top,4px) 16px 8px; -webkit-overflow-scrolling: touch; }
+.fade-up { animation: fadeUp .25s ease; }
+.pop { animation: pop .2s ease; }
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(67,39,58,.04);
+}
+.section-label {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 18px 2px 8px;
+}
+.btn-primary {
+  background: var(--berry); color: #fff; border: none; border-radius: 14px;
+  padding: 12px 0; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body);
+}
+.btn-secondary {
+  background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 0; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--body);
+}
+.btn-dashed {
+  width: 100%; background: var(--card); color: var(--ink); border: 1.5px dashed rgba(194,65,122,.4);
+  border-radius: 16px; padding: 13px 0; font-size: 13.5px; font-weight: 500; cursor: pointer; font-family: var(--body);
+}
+input[type=text], input[type=number], .field-input {
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  font-size: 14px; color: var(--ink); outline: none; background: var(--bg); width: 100%;
+}
+input:focus, select:focus { outline: 2px solid var(--berry-soft); }
+label.field-label { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; display:block; margin-bottom: 4px; }
+
+.tabbar {
+  display: flex; border-top: 1px solid var(--line); background: var(--card);
+  padding: 8px 6px calc(14px + env(safe-area-inset-bottom,0px));
+}
+.tabbar button {
+  flex: 1; background: none; border: none; cursor: pointer; color: var(--ink-soft); font-family: var(--body);
+  padding: 4px 0;
+}
+.tabbar button.active { color: var(--berry); }
+.tabbar .icon { font-size: 17px; }
+.tabbar .lbl { font-size: 10.5px; font-weight: 500; margin-top: 2px; }
+.tabbar button.active .lbl { font-weight: 700; }
+
+.toast {
+  position: absolute; bottom: 92px; left: 0; right: 0; display: flex; justify-content: center;
+  pointer-events: none; z-index: 50;
+}
+.toast-inner {
+  background: var(--ink); color: #fff; font-size: 12.5px; padding: 9px 16px; border-radius: 20px;
+  font-weight: 500;
+}
+
+.sheet-backdrop {
+  position: fixed; inset: 0; background: rgba(67,39,58,.35); z-index: 100;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  background: var(--bg); width: 100%; max-width: 480px; border-radius: 22px 22px 0 0;
+  max-height: 88vh; overflow-y: auto; padding: 18px 16px calc(20px + env(safe-area-inset-bottom,0px));
+  animation: fadeUp .2s ease;
+}
+.sheet-title { font-family: var(--serif); font-size: 19px; font-weight: 600; margin-bottom: 12px; }
+.close-x { position:absolute; top:14px; right:16px; border:none; background:none; font-size:20px; color:var(--ink-soft); cursor:pointer; }
+
+.row-item {
+  display: flex; justify-content: space-between; align-items: center; padding: 11px 10px; cursor: pointer;
+}
+.mono { font-family: var(--mono); }
+
+.chip {
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 14px;
+  padding: 9px 13px; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
+  flex-shrink: 0; box-shadow: 0 1px 2px rgba(67,39,58,.05);
+}
+
+.banner {
+  background: var(--gold-soft); border: 1px solid rgba(217,164,65,.3); border-radius: 14px;
+  padding: 11px 14px; font-size: 12.5px; color: var(--ink); margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script>
+'use strict';
+
+/* ============================= Utilities ============================= */
+
+const $ = (sel, root) => (root||document).querySelector(sel);
+const el = (tag, attrs, ...children) => {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === 'style' && typeof attrs[k] === 'object') Object.assign(e.style, attrs[k]);
+    else if (k.startsWith('on') && typeof attrs[k] === 'function') e.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+    else if (k === 'html') e.innerHTML = attrs[k];
+    else if (attrs[k] !== undefined && attrs[k] !== null && attrs[k] !== false) e.setAttribute(k, attrs[k] === true ? '' : attrs[k]);
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c === null || c === undefined || c === false) continue;
+    e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(c) : c);
+  }
+  return e;
+};
+
+function uid(prefix) {
+  return prefix + '_' + Math.random().toString(36).slice(2, 10);
+}
+function todayKey(d) {
+  d = d || new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function dateFromKey(key) { return new Date(key + 'T12:00:00'); }
+function addDaysKey(key, n) {
+  const d = dateFromKey(key);
+  d.setDate(d.getDate() + n);
+  return todayKey(d);
+}
+function round5(n) { return Math.round(n / 5) * 5; }
+function fmt(n) { return Math.round(n).toLocaleString(); }
+function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+/* ============================= Storage ============================= */
+
+const KEYS = {
+  profile: 'berry:profile',
+  targets: 'berry:targets',
+  foods: 'berry:foods',
+  meals: 'berry:meals',
+  log: 'berry:log',
+  meta: 'berry:meta',
+  plan: 'berry:plan',
+};
+
+function loadAll() {
+  const s = {};
+  for (const k in KEYS) {
+    const raw = localStorage.getItem(KEYS[k]);
+    s[k] = raw ? JSON.parse(raw) : null;
+  }
+  if (!s.foods) s.foods = [];
+  if (!s.meals) s.meals = [];
+  if (!s.log) s.log = {};
+  if (!s.meta) s.meta = { lastExportAt: null, schemaVersion: 1 };
+  if (!s.plan) s.plan = null;
+  return s;
+}
+
+let state = loadAll();
+
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    for (const k in KEYS) {
+      if (state[k] !== null && state[k] !== undefined) {
+        localStorage.setItem(KEYS[k], JSON.stringify(state[k]));
+      }
+    }
+  }, 300);
+}
+function saveNow() {
+  clearTimeout(saveTimer);
+  for (const k in KEYS) {
+    if (state[k] !== null && state[k] !== undefined) {
+      localStorage.setItem(KEYS[k], JSON.stringify(state[k]));
+    }
+  }
+}
+
+/* ============================= Calculations (§7) ============================= */
+
+function ageFromBirthYear(birthYear) {
+  return new Date().getFullYear() - birthYear;
+}
+
+function computeTargets(profile, weightLb) {
+  const kg = weightLb / 2.2046;
+  const cm = profile.heightIn * 2.54;
+  const age = ageFromBirthYear(profile.birthYear);
+  const bmr = 10*kg + 6.25*cm - 5*age - 161;
+  const maintenance = bmr * (profile.activityBase || 1.45);
+  let cals = maintenance - (profile.goalRateLbPerWk * 3500 / 7);
+  let clamped = false;
+  if (cals < 1200) { cals = 1200; clamped = true; }
+  const protein = round5(0.85 * profile.goalWeightLb);
+  const fat = round5(cals * 0.30 / 9);
+  const carbs = round5((cals - protein*4 - fat*9) / 4);
+  return {
+    cals: Math.round(cals), protein, carbs, fat, fiber: 25, ironMg: 18,
+    updatedAt: new Date().toISOString(), source: 'setup', clamped
+  };
+}
+
+function trendWeight() {
+  const keys = Object.keys(state.log).sort().filter(k => state.log[k].weightLb !== undefined);
+  if (!keys.length) return null;
+  const last7 = keys.slice(-7).map(k => state.log[k].weightLb);
+  return last7.reduce((a,b)=>a+b,0) / last7.length;
+}
+function latestWeight() {
+  const keys = Object.keys(state.log).sort().filter(k => state.log[k].weightLb !== undefined);
+  if (!keys.length) return state.profile ? state.profile.goalWeightLb : null;
+  return state.log[keys[keys.length-1]].weightLb;
+}
+function weightForBMR() {
+  return trendWeight() || latestWeight() || (state.profile && state.profile.goalWeightLb) || 150;
+}
+
+const MET = {
+  lift: { met: 3.5, unit: 'minutes', default: 45 },
+  walk: { met: 4.3, unit: 'miles', paceMinPerMi: 17 },
+  hike: { met: 6.0, unit: 'miles', paceMinPerMi: 20 },
+  bike: { met: 6.8, unit: 'minutes', default: 30 },
+  run:  { met: 9.8, unit: 'miles', paceMinPerMi: 10 },
+  yoga: { met: 2.5, unit: 'minutes' },
+  swim: { met: 5.8, unit: 'minutes' },
+  custom: { met: 4.0, unit: 'minutes' },
+};
+
+function activityKcal(type, { minutes, miles } = {}) {
+  const spec = MET[type];
+  const kg = weightForBMR() / 2.2046;
+  let hours;
+  if (miles !== undefined && miles !== null && spec.paceMinPerMi) {
+    hours = (miles * spec.paceMinPerMi) / 60;
+  } else {
+    hours = (minutes || 0) / 60;
+  }
+  const kcal = spec.met * kg * hours;
+  return Math.round(kcal / 5) * 5;
+}
+
+function dayTotals(entries) {
+  return entries.reduce((s, e) => ({
+    cals: s.cals + e.cals * e.portions,
+    protein: s.protein + e.protein * e.portions,
+    carbs: s.carbs + e.carbs * e.portions,
+    fat: s.fat + e.fat * e.portions,
+    fiber: s.fiber + e.fiber * e.portions,
+    ironMg: s.ironMg + e.ironMg * e.portions,
+  }), { cals: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, ironMg: 0 });
+}
+
+function dayActivityKcal(dayLog) {
+  if (!dayLog || !dayLog.activities) return 0;
+  return dayLog.activities.reduce((s,a) => s + a.kcal, 0);
+}
+
+function dayTarget(dayLog) {
+  const base = currentTargets().cals;
+  return base + dayActivityKcal(dayLog);
+}
+
+function currentTargets() {
+  return state.targets || { cals: 1650, protein: 115, carbs: 165, fat: 55, fiber: 25, ironMg: 18 };
+}
+
+/* frequents score: useCount * 0.7^(daysSinceLastUsed/14) */
+function frequentScore(item) {
+  if (!item.lastUsed) return 0;
+  const days = (Date.now() - new Date(item.lastUsed).getTime()) / 86400000;
+  return (item.useCount || 0) * Math.pow(0.7, days / 14);
+}
+
+function topFrequents(n) {
+  const foods = state.foods.map(f => ({ kind: 'food', ref: f, name: f.name, score: frequentScore(f) }));
+  const meals = state.meals.map(m => ({ kind: 'meal', ref: m, name: m.name, score: frequentScore(m) }));
+  return foods.concat(meals).filter(x => x.score > 0).sort((a,b) => b.score - a.score).slice(0, n);
+}
+
+function currentSlot() {
+  const h = new Date().getHours();
+  return h < 11 ? 'Breakfast' : h < 15 ? 'Lunch' : h < 20 ? 'Dinner' : 'Snacks';
+}
+
+function ironRich(mg) { return mg >= 2.0; }
+
+/* meal totals resolved live from foods, dropping missing */
+function mealTotals(meal) {
+  const items = meal.items.filter(it => state.foods.some(f => f.id === it.foodId));
+  const missing = meal.items.length !== items.length;
+  const totals = items.reduce((s, it) => {
+    const f = state.foods.find(ff => ff.id === it.foodId);
+    return {
+      cals: s.cals + f.cals * it.portions, protein: s.protein + f.protein * it.portions,
+      carbs: s.carbs + f.carbs * it.portions, fat: s.fat + f.fat * it.portions,
+      fiber: s.fiber + f.fiber * it.portions, ironMg: s.ironMg + f.ironMg * it.portions,
+    };
+  }, { cals:0, protein:0, carbs:0, fat:0, fiber:0, ironMg:0 });
+  return { totals, missing, items };
+}
+
+/* ============================= App shell / router ============================= */
+
+let route = { tab: 'today', view: null };
+let uiState = { expandedEntry: null, selDay: null, energyToday: undefined, sheet: null, coachExpandedNote: false };
+
+function showToast(msg) {
+  const host = $('.toast-host');
+  if (!host) return;
+  host.innerHTML = '';
+  const t = el('div', { class: 'toast' }, el('div', { class: 'toast-inner' }, msg));
+  host.appendChild(t);
+  setTimeout(() => { if (host.contains(t)) host.removeChild(t); }, 1600);
+}
+
+function render() {
+  const root = $('#app');
+  root.innerHTML = '';
+
+  if (!state.profile) {
+    root.appendChild(SetupWizard());
+    return;
+  }
+
+  const screenHost = el('div', { class: 'screen' });
+  if (route.view === 'history') screenHost.appendChild(HistoryScreen());
+  else if (route.tab === 'today') screenHost.appendChild(TodayScreen());
+  else if (route.tab === 'fridge') screenHost.appendChild(FridgeScreen());
+  else if (route.tab === 'meals') screenHost.appendChild(MealsScreen());
+  else if (route.tab === 'coach') screenHost.appendChild(CoachScreen());
+
+  root.appendChild(screenHost);
+  root.appendChild(el('div', { class: 'toast-host' }));
+  root.appendChild(TabBar());
+
+  if (uiState.sheet) root.appendChild(uiState.sheet());
+}
+
+function TabBar() {
+  const TABS = [
+    { id: 'today', label: 'Today', icon: '◯' },
+    { id: 'fridge', label: 'Fridge', icon: '❆' },
+    { id: 'meals', label: 'Meals', icon: '❀' },
+    { id: 'coach', label: 'Coach', icon: '✦' },
+  ];
+  const bar = el('div', { class: 'tabbar' });
+  TABS.forEach(t => {
+    const active = route.tab === t.id && !route.view;
+    bar.appendChild(el('button', { class: active ? 'active' : '', onClick: () => { route.view = null; route.tab = t.id; render(); } },
+      el('div', { class: 'icon' }, t.icon),
+      el('div', { class: 'lbl' }, t.label)
+    ));
+  });
+  return bar;
+}
+
+/* ============================= Shared components ============================= */
+
+function Card(children, style) {
+  return el('div', { class: 'card', style: style || {} }, ...(Array.isArray(children) ? children : [children]));
+}
+function SectionLabel(text) {
+  return el('div', { class: 'section-label' }, text);
+}
+function MacroBar(label, val, target, color, unit) {
+  unit = unit || 'g';
+  const pct = Math.min(100, target ? (val / target * 100) : 0);
+  return el('div', { style: { marginBottom: '9px' } },
+    el('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '4px' } },
+      el('span', { style: { color: 'var(--ink-soft)', fontWeight: '600' } }, label),
+      el('span', { class: 'mono', style: { color: 'var(--ink)' } }, `${Math.round(val)}${unit} `, el('span', { style: { color: 'var(--ink-soft)' } }, `/ ${target}${unit}`))
+    ),
+    el('div', { style: { height: '6px', background: color + '22', borderRadius: '5px' } },
+      el('div', { style: { height: '6px', width: pct + '%', background: color, borderRadius: '5px', transition: 'width .4s' } })
+    )
+  );
+}
+
+function closeSheet() { uiState.sheet = null; render(); }
+function openSheet(fn) { uiState.sheet = fn; render(); }
+
+/* ============================= Today screen ============================= */
+
+function TodayScreen() {
+  const key = todayKey();
+  const dayLog = state.log[key] || (state.log[key] = { entries: [] });
+  if (!dayLog.entries) dayLog.entries = [];
+  const totals = dayTotals(dayLog.entries);
+  const target = currentTargets();
+  const actKcal = dayActivityKcal(dayLog);
+  const effTarget = target.cals + actKcal;
+  const remaining = effTarget - totals.cals;
+  const over = remaining < 0;
+
+  const wrap = el('div', { class: 'fade-up' });
+
+  const d = new Date();
+  const header = el('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'6px 2px 0' } },
+    el('div', { style: { width: '34px' } }),
+    el('div', { style: { textAlign: 'center' } },
+      el('div', { style: { fontFamily: 'var(--serif)', fontSize: '22px', fontWeight: '600' } }, d.toLocaleDateString('en-US', { weekday: 'long' })),
+      el('div', { style: { fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' } }, d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }))
+    ),
+    el('button', { title: 'History', style: { width:'34px', height:'34px', borderRadius:'12px', border:'1px solid var(--line)', background:'var(--card)', cursor:'pointer', fontSize:'15px', color:'var(--berry)' },
+      onClick: () => { route.view = 'history'; uiState.selDay = null; render(); } }, '▦')
+  );
+  wrap.appendChild(header);
+  wrap.appendChild(ringSVG(totals.cals, effTarget, remaining, over, actKcal));
+
+  const macroCard = Card([
+    MacroBar('Protein', totals.protein, target.protein, 'var(--sage)'),
+    MacroBar('Carbs', totals.carbs, target.carbs, 'var(--gold)'),
+    MacroBar('Fat', totals.fat, target.fat, 'var(--berry)'),
+    el('div', { style: { display:'flex', gap:'14px', paddingTop:'4px', borderTop:'1px solid var(--line)', marginTop:'4px' } },
+      el('div', { style: { fontSize:'11.5px', color:'var(--ink-soft)', padding:'7px 0' } },
+        'Fiber ', el('span', { class:'mono', style:{color:'var(--ink)'} }, `${Math.round(totals.fiber)}g`), ` / ${target.fiber}g`),
+      el('div', { style: { fontSize:'11.5px', color:'var(--ink-soft)', padding:'7px 0' } },
+        'Iron ⚘ ', el('span', { class:'mono', style:{color: totals.ironMg >= 12 ? 'var(--sage)' : 'var(--iron)'} }, `${totals.ironMg.toFixed(1)}mg`), ` / ${target.ironMg}mg`)
+    )
+  ], { padding: '14px 16px 8px', marginTop: '-4px' });
+  wrap.appendChild(macroCard);
+
+  wrap.appendChild(SectionLabel('Your frequents — one tap to log'));
+  const freqRow = el('div', { style: { display:'flex', gap:'8px', overflowX:'auto', padding:'2px 2px 6px' } });
+  const freqs = topFrequents(8);
+  if (!freqs.length) {
+    freqRow.appendChild(el('div', { style: { fontSize:'12px', color:'var(--ink-soft)', padding:'8px 2px' } }, 'Log a few foods and your frequents will show up here.'));
+  }
+  freqs.forEach(fr => {
+    const cals = fr.kind === 'food' ? fr.ref.cals : mealTotals(fr.ref).totals.cals;
+    freqRow.appendChild(el('button', { class: 'chip', onClick: () => {
+      if (fr.kind === 'food') logFoodEntry(fr.ref, 1);
+      else logMeal(fr.ref);
+      render();
+    } }, fr.name, ' ', el('span', { class: 'mono', style: { color:'var(--ink-soft)', fontSize:'11px' } }, Math.round(cals))));
+  });
+  wrap.appendChild(freqRow);
+
+  const btnRow = el('div', { style: { display:'flex', gap:'8px', marginTop:'10px' } },
+    el('button', { class:'btn-primary', style:{flex:1}, onClick: () => openSheet(() => AddFoodSheet()) }, '+ Add food'),
+    el('button', { class:'btn-secondary', style:{flex:1}, onClick: copyYesterday }, 'Copy yesterday')
+  );
+  wrap.appendChild(btnRow);
+
+  ['Breakfast','Lunch','Dinner','Snacks'].forEach(slot => {
+    const items = dayLog.entries.filter(e => e.slot === slot);
+    if (!items.length) return;
+    const mealCals = items.reduce((s,f) => s + f.cals * f.portions, 0);
+    wrap.appendChild(SectionLabel([slot + ' ', el('span', { class:'mono', style:{fontStyle:'normal', fontSize:'12px'} }, `· ${Math.round(mealCals)} cal`)]));
+    const list = Card([], { padding: '6px' });
+    items.forEach((f, i) => {
+      const rowWrap = el('div', {});
+      const row = el('div', { class: 'row-item pop', style: { borderTop: i ? '1px solid var(--line)' : 'none' },
+        onClick: () => { uiState.expandedEntry = uiState.expandedEntry === f.id ? null : f.id; render(); } },
+        el('div', {},
+          el('div', { style: { fontSize:'14px', fontWeight:'500' } }, f.name, ironRich(f.ironMg) ? el('span', { style:{color:'var(--iron)', fontSize:'11px'} }, ' ⚘') : null),
+          f.portions !== 1 ? el('div', { style: { fontSize:'11px', color:'var(--berry)', marginTop:'2px' } }, `${f.portions}× portion`) : null
+        ),
+        el('div', { class:'mono', style: { fontSize:'13px', color:'var(--ink-soft)' } }, Math.round(f.cals * f.portions))
+      );
+      rowWrap.appendChild(row);
+      if (uiState.expandedEntry === f.id) {
+        const detail = el('div', { style: { padding: '0 10px 12px' }, class: 'fade-up' },
+          el('div', { class:'mono', style: { fontSize:'11px', color:'var(--ink-soft)', marginBottom:'8px' } },
+            `P ${Math.round(f.protein*f.portions)}g · C ${Math.round(f.carbs*f.portions)}g · F ${Math.round(f.fat*f.portions)}g · Fiber ${Math.round(f.fiber*f.portions)}g · Fe ${(f.ironMg*f.portions).toFixed(1)}mg`
+          ),
+          el('div', { style: { display:'flex', gap:'6px', alignItems:'center', flexWrap:'wrap' } },
+            ...[0.5,1,1.5,2].map(p => el('button', {
+              style: { border: `1px solid ${f.portions===p?'var(--berry)':'var(--line)'}`, background: f.portions===p?'var(--berry-soft)':'#fff', color:'var(--ink)', borderRadius:'10px', padding:'6px 12px', fontSize:'12px', fontFamily:'var(--mono)', cursor:'pointer' },
+              onClick: () => { setEntryPortion(key, f.id, p); render(); }
+            }, p + '×')),
+            el('input', { type:'number', step:'0.1', min:'0', placeholder:'#', value: [0.5,1,1.5,2].includes(f.portions)?'':f.portions,
+              style: { width:'54px', border:'1px solid var(--line)', borderRadius:'10px', padding:'6px 8px', fontSize:'12px', fontFamily:'var(--mono)' },
+              onChange: (e) => { const v = parseFloat(e.target.value); if (v>0) { setEntryPortion(key, f.id, v); render(); } } }),
+            el('button', { style: { marginLeft:'auto', border:'none', background:'none', color:'var(--berry)', fontSize:'12px', fontWeight:'600', cursor:'pointer' },
+              onClick: () => { removeEntry(key, f.id); uiState.expandedEntry = null; render(); } }, 'Remove')
+          )
+        );
+        rowWrap.appendChild(detail);
+      }
+      attachSwipeRemove(row, () => { removeEntry(key, f.id); render(); });
+      list.appendChild(rowWrap);
+    });
+    wrap.appendChild(list);
+  });
+
+  wrap.appendChild(el('div', { style: { height: '12px' } }));
+  return wrap;
+}
+
+function ringSVG(cals, target, remaining, over, actKcal) {
+  const R = 74, C = 2 * Math.PI * R, pct = Math.min(1, target ? cals/target : 0);
+  const svgns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgns, 'svg');
+  svg.setAttribute('width', '188'); svg.setAttribute('height', '188'); svg.setAttribute('viewBox', '0 0 200 200');
+  svg.style.display = 'block'; svg.style.margin = '0 auto';
+  const mk = (tag, attrs) => { const e = document.createElementNS(svgns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  svg.appendChild(mk('circle', { cx:100, cy:100, r:R, fill:'none', stroke:'var(--berry-soft)', 'stroke-width':10 }));
+  const fg = mk('circle', { cx:100, cy:100, r:R, fill:'none', stroke: over ? 'var(--gold)' : 'var(--berry)', 'stroke-width':10,
+    'stroke-linecap':'round', 'stroke-dasharray': C, 'stroke-dashoffset': C * (1-pct), transform:'rotate(-90 100 100)' });
+  fg.style.transition = 'stroke-dashoffset .5s ease';
+  svg.appendChild(fg);
+  const t1 = mk('text', { x:100, y:92, 'text-anchor':'middle', style:'font-family:var(--serif);font-weight:600;font-size:40px;fill:var(--ink)' });
+  t1.textContent = Math.abs(Math.round(remaining)).toLocaleString();
+  svg.appendChild(t1);
+  const t2 = mk('text', { x:100, y:116, 'text-anchor':'middle', style:'font-family:var(--body);font-size:12px;fill:var(--ink-soft)' });
+  t2.textContent = over ? 'over today' : 'calories left';
+  svg.appendChild(t2);
+  const t3 = mk('text', { x:100, y:136, 'text-anchor':'middle', style:'font-family:var(--mono);font-size:11px;fill:var(--ink-soft)' });
+  t3.textContent = `${fmt(cals)} of ${fmt(target)}` + (actKcal ? ` (+${actKcal} activity)` : '');
+  svg.appendChild(t3);
+  return svg;
+}
+
+function attachSwipeRemove(rowEl, onRemove) {
+  let startX = null, dx = 0;
+  rowEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; dx = 0; }, { passive: true });
+  rowEl.addEventListener('touchmove', (e) => {
+    if (startX === null) return;
+    dx = e.touches[0].clientX - startX;
+    if (dx < 0) rowEl.style.transform = `translateX(${Math.max(dx, -80)}px)`;
+  }, { passive: true });
+  rowEl.addEventListener('touchend', () => {
+    if (dx < -60) onRemove();
+    else rowEl.style.transform = '';
+    startX = null; dx = 0;
+  });
+}
+
+function logFoodEntry(food, portions, slot) {
+  const key = todayKey();
+  const dayLog = state.log[key] || (state.log[key] = { entries: [] });
+  if (!dayLog.entries) dayLog.entries = [];
+  const s = slot || currentSlot();
+  dayLog.entries.push({
+    id: uid('e'), slot: s, foodId: food.id || null,
+    name: food.name, cals: food.cals, protein: food.protein, carbs: food.carbs, fat: food.fat, fiber: food.fiber, ironMg: food.ironMg,
+    portions: portions || 1
+  });
+  if (food.id) {
+    const f = state.foods.find(x => x.id === food.id);
+    if (f) { f.useCount = (f.useCount||0) + 1; f.lastUsed = new Date().toISOString(); }
+  }
+  save();
+  showToast(`Added to ${s.toLowerCase()}`);
+}
+
+function logMeal(meal) {
+  const key = todayKey();
+  const dayLog = state.log[key] || (state.log[key] = { entries: [] });
+  if (!dayLog.entries) dayLog.entries = [];
+  const s = currentSlot();
+  const { items } = mealTotals(meal);
+  items.forEach(it => {
+    const f = state.foods.find(ff => ff.id === it.foodId);
+    dayLog.entries.push({
+      id: uid('e'), slot: s, foodId: f.id,
+      name: f.name, cals: f.cals, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber, ironMg: f.ironMg,
+      portions: it.portions
+    });
+    f.useCount = (f.useCount||0) + 1; f.lastUsed = new Date().toISOString();
+  });
+  meal.useCount = (meal.useCount||0) + 1; meal.lastUsed = new Date().toISOString();
+  save();
+  showToast(`Added to ${s.toLowerCase()}`);
+}
+
+function setEntryPortion(dayKey, entryId, p) {
+  const dayLog = state.log[dayKey];
+  if (!dayLog) return;
+  const e = dayLog.entries.find(x => x.id === entryId);
+  if (e) e.portions = p;
+  save();
+}
+function removeEntry(dayKey, entryId) {
+  const dayLog = state.log[dayKey];
+  if (!dayLog) return;
+  dayLog.entries = dayLog.entries.filter(x => x.id !== entryId);
+  save();
+}
+
+function copyYesterday() {
+  const today = todayKey();
+  const yKey = addDaysKey(today, -1);
+  const yLog = state.log[yKey];
+  if (!yLog || !yLog.entries || !yLog.entries.length) { showToast('No entries yesterday'); return; }
+  const dayLog = state.log[today] || (state.log[today] = { entries: [] });
+  if (!dayLog.entries) dayLog.entries = [];
+  yLog.entries.forEach(e => {
+    dayLog.entries.push({ id: uid('e'), slot: e.slot, foodId: e.foodId, name: e.name, cals: e.cals, protein: e.protein, carbs: e.carbs, fat: e.fat, fiber: e.fiber, ironMg: e.ironMg, portions: e.portions });
+  });
+  save();
+  showToast("Copied yesterday's log");
+  render();
+}
+
+/* ============================= Add Food sheet ============================= */
+
+function AddFoodSheet(preselectSlot) {
+  let query = '';
+  const back = el('div', { class: 'sheet-backdrop', onClick: (e) => { if (e.target === back) closeSheet(); } });
+  const sheet = el('div', { class: 'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, 'Add food'));
+  const input = el('input', { type:'text', placeholder:'Search your foods...', style:{marginBottom:'10px'} });
+  sheet.appendChild(input);
+  const resultsHost = el('div', {});
+  sheet.appendChild(resultsHost);
+  const newFoodBtn = el('button', { class:'btn-dashed', style:{marginTop:'10px'}, onClick: () => { openSheet(() => NewFoodSheet({ log: true })); } }, '+ New food');
+  sheet.appendChild(newFoodBtn);
+
+  function renderResults() {
+    resultsHost.innerHTML = '';
+    const q = query.trim().toLowerCase();
+    let items = state.foods.map(f => ({ f, score: frequentScore(f) }));
+    if (q) items = items.filter(x => x.f.name.toLowerCase().includes(q));
+    items.sort((a,b) => b.score - a.score);
+    items.slice(0, 30).forEach(({f}) => {
+      resultsHost.appendChild(el('div', { class:'row-item', style:{borderTop:'1px solid var(--line)'}, onClick: () => {
+        logFoodEntry(f, 1, preselectSlot);
+        closeSheet();
+      } },
+        el('div', {},
+          el('div', { style:{fontSize:'14px', fontWeight:'500'} }, f.name, ironRich(f.ironMg) ? el('span', {style:{color:'var(--iron)',fontSize:'11px'}}, ' ⚘') : null),
+          el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginTop:'2px'} }, f.serving)
+        ),
+        el('div', { class:'mono', style:{fontSize:'13px', color:'var(--ink-soft)'} }, Math.round(f.cals))
+      ));
+    });
+    if (!items.length) resultsHost.appendChild(el('div', { style:{fontSize:'12px', color:'var(--ink-soft)', padding:'10px 2px'} }, 'No matches — add a new food below.'));
+  }
+  input.addEventListener('input', (e) => { query = e.target.value; renderResults(); });
+  renderResults();
+
+  back.appendChild(sheet);
+  return back;
+}
+
+function NewFoodSheet(opts) {
+  opts = opts || {};
+  const f = { name:'', serving:'', cals:'', protein:'', carbs:'', fat:'', fiber:'', ironMg:'', store: opts.store || '' };
+  const back = el('div', { class: 'sheet-backdrop', onClick: (e) => { if (e.target === back) closeSheet(); } });
+  const sheet = el('div', { class: 'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, opts.editFood ? 'Edit food' : 'New food'));
+
+  if (opts.editFood) Object.assign(f, opts.editFood);
+
+  const field = (label, key, opts2) => {
+    opts2 = opts2 || {};
+    const wrap = el('div', { style:{marginBottom:'10px'} });
+    wrap.appendChild(el('label', { class:'field-label' }, label));
+    const inp = el('input', { type: opts2.numeric ? 'number' : 'text', inputmode: opts2.numeric ? 'decimal' : undefined,
+      value: f[key], step: opts2.numeric ? '0.1' : undefined,
+      onInput: (e) => { f[key] = opts2.numeric ? e.target.value : e.target.value; } });
+    wrap.appendChild(inp);
+    return wrap;
+  };
+
+  sheet.appendChild(field('Name', 'name'));
+  sheet.appendChild(field('Serving', 'serving'));
+  const row1 = el('div', { style:{display:'flex', gap:'8px'} }, field('Calories', 'cals', {numeric:true}), field('Protein (g)', 'protein', {numeric:true}));
+  row1.style.display = 'grid'; row1.style.gridTemplateColumns = '1fr 1fr'; row1.style.gap = '8px';
+  sheet.appendChild(row1);
+  const row2 = el('div', { style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'} }, field('Carbs (g)', 'carbs', {numeric:true}), field('Fat (g)', 'fat', {numeric:true}));
+  sheet.appendChild(row2);
+  const row3 = el('div', { style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'} }, field('Fiber (g)', 'fiber', {numeric:true}), field('Iron (mg)', 'ironMg', {numeric:true}));
+  sheet.appendChild(row3);
+
+  const storeWrap = el('div', { style:{marginBottom:'12px'} });
+  storeWrap.appendChild(el('label', { class:'field-label' }, 'Store (optional)'));
+  const sel = el('select', { class: 'field-input', onChange: (e) => f.store = e.target.value });
+  ['', 'Costco', "Trader Joe's", 'Whole Foods', 'Other'].forEach(s => {
+    const o = el('option', { value: s }, s || '— not in Fridge —');
+    if (s === f.store) o.selected = true;
+    sel.appendChild(o);
+  });
+  storeWrap.appendChild(sel);
+  sheet.appendChild(storeWrap);
+
+  function buildFoodObj() {
+    return {
+      id: opts.editFood ? opts.editFood.id : uid('f'),
+      name: f.name.trim() || 'Unnamed food',
+      serving: f.serving.trim(),
+      cals: parseFloat(f.cals) || 0, protein: parseFloat(f.protein) || 0, carbs: parseFloat(f.carbs) || 0,
+      fat: parseFloat(f.fat) || 0, fiber: parseFloat(f.fiber) || 0, ironMg: parseFloat(f.ironMg) || 0,
+      store: f.store || null,
+      useCount: opts.editFood ? opts.editFood.useCount : 0,
+      lastUsed: opts.editFood ? opts.editFood.lastUsed : null,
+      source: opts.editFood ? opts.editFood.source : 'manual',
+      createdAt: opts.editFood ? opts.editFood.createdAt : new Date().toISOString(),
+    };
+  }
+
+  const btnRow = el('div', { style:{display:'flex', gap:'8px', marginTop:'6px'} });
+  if (opts.editFood) {
+    btnRow.appendChild(el('button', { class:'btn-primary', style:{flex:1}, onClick: () => {
+      const idx = state.foods.findIndex(x => x.id === opts.editFood.id);
+      state.foods[idx] = buildFoodObj();
+      save(); closeSheet(); showToast('Saved'); render();
+    } }, 'Save'));
+    btnRow.appendChild(el('button', { style:{flex:1, background:'#fff', color:'var(--berry)', border:'1px solid var(--line)', borderRadius:'14px', padding:'12px 0', fontSize:'14px', fontWeight:'600', cursor:'pointer'},
+      onClick: () => {
+        if (confirm('Remove from fridge? Logged history keeps its numbers.')) {
+          state.foods = state.foods.filter(x => x.id !== opts.editFood.id);
+          state.meals.forEach(m => { m.items = m.items.filter(it => it.foodId !== opts.editFood.id); });
+          save(); closeSheet(); showToast('Deleted'); render();
+        }
+      } }, 'Delete'));
+  } else {
+    btnRow.appendChild(el('button', { class:'btn-primary', style:{flex:1}, onClick: () => {
+      const nf = buildFoodObj();
+      state.foods.push(nf);
+      if (opts.log) logFoodEntry(nf, 1);
+      save(); closeSheet(); showToast(opts.log ? `Added to ${currentSlot().toLowerCase()}` : 'Saved to library'); render();
+    } }, opts.log ? 'Save & log' : 'Save'));
+    if (opts.log) {
+      btnRow.appendChild(el('button', { class:'btn-secondary', style:{flex:1}, onClick: () => {
+        const nf = buildFoodObj();
+        state.foods.push(nf); save(); closeSheet(); showToast('Saved to library'); render();
+      } }, 'Save to library only'));
+    }
+  }
+  sheet.appendChild(btnRow);
+
+  back.appendChild(sheet);
+  return back;
+}
+
+/* ============================= History screen ============================= */
+
+let histMonth = null; // {y, m}
+
+function HistoryScreen() {
+  const wrap = el('div', { class:'fade-up' });
+  const now = new Date();
+  if (!histMonth) histMonth = { y: now.getFullYear(), m: now.getMonth() };
+  if (!uiState.selDay) uiState.selDay = todayKey();
+
+  wrap.appendChild(el('div', { style:{display:'flex', alignItems:'center', gap:'10px', padding:'6px 0 2px'} },
+    el('button', { style:{border:'none', background:'none', color:'var(--berry)', fontSize:'20px', cursor:'pointer', padding:0},
+      onClick: () => { route.view = null; render(); } }, '‹'),
+    el('div', { style:{fontFamily:'var(--serif)', fontSize:'22px', fontWeight:'600'} }, 'History')
+  ));
+
+  const first = new Date(histMonth.y, histMonth.m, 1);
+  const firstWeekday = first.getDay();
+  const daysInMonth = new Date(histMonth.y, histMonth.m+1, 0).getDate();
+  const target = currentTargets();
+  const monthLabel = first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  wrap.appendChild(el('div', { style:{display:'flex', alignItems:'center', justifyContent:'space-between', margin:'18px 2px 8px'} },
+    el('button', { style:{border:'none', background:'none', color:'var(--berry)', fontSize:'16px', cursor:'pointer'},
+      onClick: () => { histMonth.m--; if (histMonth.m<0){histMonth.m=11;histMonth.y--;} render(); } }, '‹'),
+    el('div', { class:'section-label', style:{margin:0} }, monthLabel),
+    el('button', { style:{border:'none', background:'none', color:'var(--berry)', fontSize:'16px', cursor:'pointer'},
+      onClick: () => { histMonth.m++; if (histMonth.m>11){histMonth.m=0;histMonth.y++;} render(); } }, '›')
+  ));
+
+  const shade = (cals, dayTarg) => {
+    const diff = Math.abs(cals - dayTarg);
+    if (diff <= 100) return 'var(--sage)';
+    if (diff <= 250) return 'var(--gold)';
+    return 'var(--rose-off)';
+  };
+
+  const grid = el('div', {});
+  const dowRow = el('div', { style:{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px', fontSize:'10px', color:'var(--ink-soft)', textAlign:'center', marginBottom:'6px'} });
+  ['S','M','T','W','T','F','S'].forEach(d => dowRow.appendChild(el('div', {}, d)));
+  const cellsGrid = el('div', { style:{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px'} });
+  for (let i=0;i<firstWeekday;i++) cellsGrid.appendChild(el('div', {}));
+  const todayK = todayKey();
+  for (let d=1; d<=daysInMonth; d++) {
+    const key = `${histMonth.y}-${String(histMonth.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayLog = state.log[key];
+    const hasData = dayLog && dayLog.entries && dayLog.entries.length;
+    const isToday = key === todayK, isSel = key === uiState.selDay;
+    const isFuture = key > todayK;
+    let bg = 'var(--bg)', calsTxt = null;
+    if (hasData) {
+      const t = dayTotals(dayLog.entries);
+      const dt = dayTarget(dayLog);
+      bg = shade(t.cals, dt);
+      calsTxt = (t.cals/1000).toFixed(1) + 'k';
+      if (!isSel) bg = bg + '55' === bg ? bg : hexAlpha(bg, 0.33);
+    } else if (!isFuture) {
+      bg = '#fff';
+    }
+    const btn = el('button', {
+      style: {
+        aspectRatio:'1', borderRadius:'10px', cursor: hasData?'pointer':'default',
+        border: isSel ? '2px solid var(--berry)' : isToday ? '2px solid rgba(67,39,58,.2)' : '1px solid var(--line)',
+        background: isFuture ? 'var(--bg)' : bg,
+        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:0
+      },
+      onClick: hasData ? () => { uiState.selDay = key; render(); } : undefined,
+      disabled: !hasData
+    },
+      el('div', { style:{fontSize:'11px', fontWeight: isToday?'700':'500'} }, d),
+      calsTxt ? el('div', { class:'mono', style:{fontSize:'7.5px', opacity:.85} }, calsTxt) : null
+    );
+    cellsGrid.appendChild(btn);
+  }
+  grid.appendChild(dowRow); grid.appendChild(cellsGrid);
+  const legend = el('div', { style:{display:'flex', gap:'12px', marginTop:'12px', fontSize:'10px', color:'var(--ink-soft)'} });
+  [['var(--sage)','on target'],['var(--gold)','near'],['var(--rose-off)','off']].forEach(([c,l]) => {
+    legend.appendChild(el('span', { style:{display:'flex', alignItems:'center', gap:'4px'} },
+      el('span', { style:{width:'9px', height:'9px', borderRadius:'3px', background:c, display:'inline-block'} }), l));
+  });
+  wrap.appendChild(Card([grid, legend]));
+
+  const selLog = state.log[uiState.selDay];
+  if (selLog && selLog.entries && selLog.entries.length) {
+    const t = dayTotals(selLog.entries);
+    const worstEnergy = Math.min(selLog.energyAM || 4, selLog.energyPM || 4);
+    const energyLbl = worstEnergy === 4 ? '—' : ['','low','ok','good'][worstEnergy];
+    const selDate = dateFromKey(uiState.selDay);
+    wrap.appendChild(SectionLabel(selDate.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })));
+    const statsRow = el('div', { style:{display:'flex', justifyContent:'space-around', padding:'10px 6px', borderBottom:'1px solid var(--line)'} });
+    [['Calories', fmt(t.cals)], ['Protein', Math.round(t.protein)+'g'], ['Iron', t.ironMg.toFixed(1)+'mg'], ['Energy', energyLbl]].forEach(([l,v]) => {
+      statsRow.appendChild(el('div', { style:{textAlign:'center'} },
+        el('div', { class:'mono', style:{fontSize:'14px'} }, v),
+        el('div', { style:{fontSize:'9.5px', color:'var(--ink-soft)', marginTop:'2px'} }, l)));
+    });
+    const detailCard = Card([], { padding:'6px' });
+    detailCard.appendChild(statsRow);
+    selLog.entries.forEach((e,i) => {
+      detailCard.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', padding:'9px 10px', borderTop: i?'1px solid var(--line)':'none'} },
+        el('div', { style:{fontSize:'13px'} }, el('span', {style:{color:'var(--ink-soft)', fontSize:'10.5px', marginRight:'8px'}}, e.slot), e.name),
+        el('span', { class:'mono', style:{fontSize:'12.5px', color:'var(--ink-soft)'} }, Math.round(e.cals*e.portions))
+      ));
+    });
+    (selLog.activities||[]).forEach((a,i) => {
+      detailCard.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', padding:'9px 10px', borderTop:'1px solid var(--line)'} },
+        el('div', { style:{fontSize:13} }, el('span', {style:{color:'var(--sage)', fontSize:'10.5px', marginRight:'8px'}}, 'Activity'), a.label),
+        el('span', { class:'mono', style:{fontSize:'12.5px', color:'var(--ink-soft)'} }, a.kcal)
+      ));
+    });
+    wrap.appendChild(detailCard);
+  }
+
+  const last14 = last14Averages();
+  wrap.appendChild(SectionLabel('Last 14 days'));
+  wrap.appendChild(Card(
+    el('div', { style:{display:'flex', justifyContent:'space-around'} },
+      ...[['Avg calories', last14.cals!==null?fmt(last14.cals):'—'], ['Avg protein', last14.protein!==null?Math.round(last14.protein)+'g':'—'], ['Avg iron', last14.ironMg!==null?last14.ironMg.toFixed(1)+'mg':'—']].map(([l,v]) =>
+        el('div', { style:{textAlign:'center'} }, el('div', { class:'mono', style:{fontSize:'17px'} }, v), el('div', { style:{fontSize:'10px', color:'var(--ink-soft)', marginTop:'3px'} }, l))
+      )
+    )
+  ));
+
+  const topFoods = mostLoggedLately(5);
+  wrap.appendChild(SectionLabel('Most logged lately'));
+  const topCard = Card([], { padding:'8px' });
+  if (!topFoods.length) topCard.appendChild(el('div', { style:{fontSize:'12px', color:'var(--ink-soft)', padding:'6px'} }, 'Nothing logged in the last 30 days yet.'));
+  const maxCount = topFoods.length ? topFoods[0].count : 1;
+  topFoods.forEach((f,i) => {
+    topCard.appendChild(el('div', { style:{display:'flex', alignItems:'center', gap:'10px', padding:'7px 8px', borderTop: i?'1px solid var(--line)':'none'} },
+      el('div', { style:{flex:1, fontSize:'13px'} }, f.name),
+      el('div', { style:{width:'90px', height:'6px', background:'var(--berry-soft)', borderRadius:'4px'} },
+        el('div', { style:{height:'6px', width: (f.count/maxCount*100)+'%', background:'var(--berry)', borderRadius:'4px'} })),
+      el('span', { class:'mono', style:{fontSize:'11.5px', color:'var(--ink-soft)', width:'24px', textAlign:'right'} }, f.count)
+    ));
+  });
+  wrap.appendChild(topCard);
+  wrap.appendChild(el('div', { style:{height:'12px'} }));
+  return wrap;
+}
+
+function hexAlpha(hex, alpha) {
+  return hex; // simplified — CSS var colors already work fine without alpha blending for this UI
+}
+
+function last14Averages() {
+  const keys = [];
+  for (let i=0;i<14;i++) keys.push(addDaysKey(todayKey(), -i));
+  const days = keys.map(k => state.log[k]).filter(d => d && d.entries && d.entries.length);
+  if (!days.length) return { cals:null, protein:null, ironMg:null };
+  const sums = days.reduce((s,d) => { const t = dayTotals(d.entries); return { cals:s.cals+t.cals, protein:s.protein+t.protein, ironMg:s.ironMg+t.ironMg }; }, {cals:0,protein:0,ironMg:0});
+  return { cals: sums.cals/days.length, protein: sums.protein/days.length, ironMg: sums.ironMg/days.length };
+}
+
+function mostLoggedLately(n) {
+  const counts = {};
+  for (let i=0;i<30;i++) {
+    const k = addDaysKey(todayKey(), -i);
+    const d = state.log[k];
+    if (!d || !d.entries) continue;
+    d.entries.forEach(e => { counts[e.name] = (counts[e.name]||0) + 1; });
+  }
+  return Object.entries(counts).map(([name,count]) => ({name,count})).sort((a,b) => b.count-a.count).slice(0,n);
+}
+
+/* ============================= Fridge screen ============================= */
+
+function FridgeScreen() {
+  const wrap = el('div', { class:'fade-up' });
+  wrap.appendChild(el('div', { style:{fontFamily:'var(--serif)', fontSize:'22px', fontWeight:'600', padding:'6px 0 2px'} }, 'Fridge'));
+  wrap.appendChild(el('div', { style:{fontSize:'12.5px', color:'var(--ink-soft)', lineHeight:1.5} },
+    'Everything you actually buy. ', el('span', {style:{color:'var(--iron)'}}, '⚘ = iron-rich')));
+
+  const importCard = Card([
+    el('div', { style:{fontWeight:'600', fontSize:'13.5px', marginBottom:'4px'} }, '🧾 Update from receipts'),
+    el('div', { style:{fontSize:'12px', color:'var(--ink-soft)', lineHeight:1.55} },
+      'Every week or two: photograph receipts into your Claude project; Coach returns files to import here.'),
+    ImportButton()
+  ], { marginTop:'14px', background:'var(--berry-soft)', border:'1px solid rgba(194,65,122,.13)' });
+  wrap.appendChild(importCard);
+
+  const groups = { 'Costco': [], "Trader Joe's": [], 'Whole Foods': [], 'Other': [] };
+  state.foods.forEach(f => { if (f.store && groups[f.store]) groups[f.store].push(f); });
+
+  Object.entries(groups).forEach(([store, items]) => {
+    if (!items.length) return;
+    wrap.appendChild(SectionLabel(store));
+    const list = Card([], { padding:'6px' });
+    items.forEach((f,i) => {
+      list.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 10px', borderTop: i?'1px solid var(--line)':'none', cursor:'pointer'},
+        onClick: () => openSheet(() => NewFoodSheet({ editFood: f })) },
+        el('div', {},
+          el('div', { style:{fontSize:'14px', fontWeight:'500'} }, f.name, ironRich(f.ironMg) ? el('span', {style:{color:'var(--iron)', fontSize:'11px'}}, ' ⚘') : null),
+          el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginTop:'2px'} }, `${f.serving} · ${Math.round(f.protein)}g protein · ${f.ironMg}mg iron`)
+        ),
+        el('div', { style:{display:'flex', alignItems:'center', gap:'10px'} },
+          el('span', { class:'mono', style:{fontSize:'13px', color:'var(--ink-soft)'} }, Math.round(f.cals)),
+          el('button', { style:{border:'1px solid var(--line)', background:'#fff', color:'var(--berry)', borderRadius:'10px', width:'30px', height:'30px', fontSize:'17px', cursor:'pointer', lineHeight:1},
+            onClick: (e) => { e.stopPropagation(); logFoodEntry(f, 1); render(); } }, '+')
+        )
+      ));
+    });
+    wrap.appendChild(list);
+  });
+
+  wrap.appendChild(el('button', { class:'btn-dashed', style:{marginTop:'14px'}, onClick: () => openSheet(() => NewFoodSheet({ store: 'Other' })) }, '+ Add fridge item'));
+  wrap.appendChild(el('div', { style:{height:'12px'} }));
+  return wrap;
+}
+
+function ImportButton() {
+  const inp = el('input', { type:'file', accept:'.json', style:{display:'none'}, onChange: handleImportFile });
+  return el('div', {},
+    inp,
+    el('button', { class:'btn-primary', style:{marginTop:'10px', width:'auto', padding:'10px 16px'}, onClick: () => inp.click() }, 'Import Berry file')
+  );
+}
+
+/* ============================= Meals screen ============================= */
+
+function MealsScreen() {
+  const wrap = el('div', { class:'fade-up' });
+  wrap.appendChild(el('div', { style:{fontFamily:'var(--serif)', fontSize:'22px', fontWeight:'600', padding:'6px 0 2px'} }, 'Meals'));
+  wrap.appendChild(el('div', { style:{fontSize:'12.5px', color:'var(--ink-soft)'} }, 'Whole plates you make often — logged in one tap.'));
+
+  state.meals.forEach(m => {
+    const { totals, missing } = mealTotals(m);
+    const card = Card([
+      el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center'} },
+        el('div', {},
+          el('div', { style:{fontFamily:'var(--serif)', fontSize:'16px', fontWeight:'600'} }, m.name, totals.ironMg >= 3 ? el('span', {style:{color:'var(--iron)', fontSize:'12px'}}, ' ⚘') : null),
+          el('div', { style:{fontSize:'12px', color:'var(--ink-soft)', marginTop:'3px'} }, m.desc || ''),
+          el('div', { class:'mono', style:{fontSize:'11.5px', color:'var(--ink-soft)', marginTop:'5px'} }, `${Math.round(totals.cals)} cal · ${Math.round(totals.protein)}g protein · ${totals.ironMg.toFixed(1)}mg iron`),
+          missing ? el('div', { style:{fontSize:'11px', color:'var(--gold)', marginTop:'3px'} }, '1 item missing') : null
+        ),
+        el('button', { class:'btn-primary', style:{width:'auto', padding:'10px 14px'}, onClick: (e) => { e.stopPropagation(); logMeal(m); render(); } }, 'Log it')
+      )
+    ], { marginTop:'12px', cursor:'pointer' });
+    card.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON') openSheet(() => MealEditSheet(m)); });
+    wrap.appendChild(card);
+  });
+
+  wrap.appendChild(el('button', { class:'btn-dashed', style:{marginTop:'14px'}, onClick: () => openSheet(() => MealEditSheet(null)) }, '+ Build a new meal'));
+  wrap.appendChild(el('div', { style:{height:'12px'} }));
+  return wrap;
+}
+
+function MealEditSheet(meal) {
+  const isNew = !meal;
+  const draft = isNew ? { id: uid('m'), name:'', desc:'', items: [], createdAt: new Date().toISOString(), useCount: 0 }
+                       : JSON.parse(JSON.stringify(meal));
+
+  const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target === back) closeSheet(); } });
+  const sheet = el('div', { class:'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, isNew ? 'Build a meal' : 'Edit meal'));
+
+  const nameInp = el('input', { type:'text', placeholder:'Meal name', value: draft.name, style:{marginBottom:'8px'}, onInput: e => draft.name = e.target.value });
+  const descInp = el('input', { type:'text', placeholder:'Description', value: draft.desc, style:{marginBottom:'12px'}, onInput: e => draft.desc = e.target.value });
+  sheet.appendChild(nameInp); sheet.appendChild(descInp);
+
+  const itemsHost = el('div', {});
+  const totalsHost = el('div', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)', margin:'8px 0'} });
+
+  function refreshItems() {
+    itemsHost.innerHTML = '';
+    let totals = { cals:0, protein:0, ironMg:0 };
+    draft.items.forEach((it, idx) => {
+      const f = state.foods.find(ff => ff.id === it.foodId);
+      if (!f) return;
+      totals.cals += f.cals*it.portions; totals.protein += f.protein*it.portions; totals.ironMg += f.ironMg*it.portions;
+      itemsHost.appendChild(el('div', { style:{display:'flex', alignItems:'center', gap:'8px', padding:'8px 0', borderTop: idx?'1px solid var(--line)':'none'} },
+        el('div', { style:{flex:1, fontSize:'13px'} }, f.name),
+        el('input', { type:'number', step:'0.5', min:'0', value:it.portions, style:{width:'54px', border:'1px solid var(--line)', borderRadius:'8px', padding:'5px 6px', fontFamily:'var(--mono)', fontSize:'12px'},
+          onChange: (e) => { it.portions = parseFloat(e.target.value)||1; refreshItems(); } }),
+        el('button', { style:{border:'none', background:'none', color:'var(--berry)', fontSize:'12px', cursor:'pointer'}, onClick: () => { draft.items.splice(idx,1); refreshItems(); } }, 'Remove')
+      ));
+    });
+    totalsHost.textContent = `${Math.round(totals.cals)} cal · ${Math.round(totals.protein)}g protein · ${totals.ironMg.toFixed(1)}mg iron`;
+  }
+  refreshItems();
+  sheet.appendChild(itemsHost);
+  sheet.appendChild(totalsHost);
+
+  const addItemInp = el('input', { type:'text', placeholder:'Search foods to add...', style:{marginBottom:'6px'} });
+  const addResults = el('div', {});
+  addItemInp.addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    addResults.innerHTML = '';
+    if (!q) return;
+    state.foods.filter(f => f.name.toLowerCase().includes(q)).slice(0,8).forEach(f => {
+      addResults.appendChild(el('div', { class:'row-item', style:{borderTop:'1px solid var(--line)'}, onClick: () => {
+        draft.items.push({ foodId: f.id, portions: 1 }); addItemInp.value=''; addResults.innerHTML=''; refreshItems();
+      } }, el('div', { style:{fontSize:'13px'} }, f.name), el('div', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)'} }, Math.round(f.cals))));
+    });
+  });
+  sheet.appendChild(addItemInp);
+  sheet.appendChild(addResults);
+
+  const btnRow = el('div', { style:{display:'flex', gap:'8px', marginTop:'14px'} });
+  btnRow.appendChild(el('button', { class:'btn-primary', style:{flex:1}, onClick: () => {
+    draft.name = draft.name.trim() || 'Unnamed meal';
+    if (isNew) state.meals.push(draft);
+    else { const idx = state.meals.findIndex(m => m.id === meal.id); state.meals[idx] = draft; }
+    save(); closeSheet(); showToast('Saved'); render();
+  } }, 'Save'));
+  if (!isNew) {
+    btnRow.appendChild(el('button', { style:{flex:1, background:'#fff', color:'var(--berry)', border:'1px solid var(--line)', borderRadius:'14px', padding:'12px 0', fontSize:'14px', fontWeight:'600', cursor:'pointer'},
+      onClick: () => {
+        if (confirm('Delete this meal?')) { state.meals = state.meals.filter(m => m.id !== meal.id); save(); closeSheet(); showToast('Deleted'); render(); }
+      } }, 'Delete'));
+  }
+  sheet.appendChild(btnRow);
+
+  back.appendChild(sheet);
+  return back;
+}
+
+/* ============================= Coach screen ============================= */
+
+function CoachScreen() {
+  const wrap = el('div', { class:'fade-up' });
+  wrap.appendChild(el('div', { style:{fontFamily:'var(--serif)', fontSize:'22px', fontWeight:'600', padding:'6px 0 2px'} }, 'Coach'));
+
+  if (state.meta.lastExportAt) {
+    const days = (Date.now() - new Date(state.meta.lastExportAt).getTime()) / 86400000;
+    if (days > 14) wrap.appendChild(el('div', { class:'banner' }, "It's been a while — export a backup to keep your data safe."));
+  } else {
+    wrap.appendChild(el('div', { class:'banner' }, "It's been a while — export a backup to keep your data safe."));
+  }
+
+  const target = currentTargets();
+  wrap.appendChild(Card(
+    el('div', { style:{display:'flex', justifyContent:'space-between'} },
+      ...[['Daily target', fmt(target.cals), 'cal'], ['Protein', String(target.protein), 'g'], ['Goal pace', (state.profile.goalRateLbPerWk>0?'−':'') + state.profile.goalRateLbPerWk.toFixed(1), 'lb/wk']].map(([l,v,u]) =>
+        el('div', { style:{textAlign:'center', flex:1} },
+          el('div', { class:'mono', style:{fontSize:'19px', fontWeight:'500'} }, v, el('span', {style:{fontSize:'11px', color:'var(--ink-soft)'}}, ' '+u)),
+          el('div', { style:{fontSize:'10.5px', color:'var(--ink-soft)', marginTop:'3px'} }, l)
+        )
+      )
+    ), { marginTop:'12px', cursor:'pointer' }
+  ));
+  wrap.lastChild.addEventListener('click', () => openSheet(() => SettingsSheet()));
+
+  // Weight trend
+  wrap.appendChild(SectionLabel('Weight trend — the sage line is what matters'));
+  const weights = weightSeries(28);
+  const trendCard = Card([]);
+  trendCard.appendChild(sparklineSVG(weights));
+  const trendNow = trendWeight();
+  const priorAvg = priorWeekAvg();
+  const weeklyChange = (trendNow !== null && priorAvg !== null) ? trendNow - priorAvg : null;
+  trendCard.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', marginTop:'8px', fontSize:'12px'} },
+    el('span', { style:{color:'var(--ink-soft)'} }, '7-day average'),
+    el('span', { class:'mono' }, trendNow!==null?trendNow.toFixed(1)+' lb':'—',
+      weeklyChange!==null ? el('span', { style:{color: weeklyChange<=0?'var(--sage)':'var(--gold)', marginLeft:'8px'} }, `${weeklyChange<=0?'▾':'▴'} ${Math.abs(weeklyChange).toFixed(1)}/wk`) : null
+    )
+  ));
+  let weightVal = '';
+  const wInp = el('input', { placeholder:"Today's weight", inputmode:'decimal', style:{flex:1}, onInput: e => weightVal = e.target.value });
+  trendCard.appendChild(el('div', { style:{display:'flex', gap:'8px', marginTop:'12px'} },
+    wInp,
+    el('button', { style:{background:'var(--sage)', color:'#fff', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'13px', fontWeight:'600', cursor:'pointer'},
+      onClick: () => { const v = parseFloat(weightVal); if (!v) return; const k = todayKey(); const dl = state.log[k] || (state.log[k]={entries:[]}); dl.weightLb = v; save(); showToast('Weight logged'); render(); } }, 'Log')
+  ));
+  wrap.appendChild(trendCard);
+
+  // fast-loss guardrail
+  const fastLoss = checkFastLoss();
+  if (fastLoss) wrap.appendChild(el('div', { class:'banner', style:{marginTop:'-4px'} }, "You're losing faster than planned — consider adding ~150 calories. Fast loss costs muscle and energy."));
+
+  // Macros last 14 days
+  wrap.appendChild(SectionLabel('Macros — last 14 days'));
+  const macroData = macroTrendData();
+  const macroCard = Card([]);
+  macroCard.appendChild(macroBarsSVG(macroData));
+  macroCard.appendChild(el('div', { style:{display:'flex', gap:'12px', marginTop:'10px', fontSize:'10.5px', color:'var(--ink-soft)', flexWrap:'wrap'} },
+    ...[['var(--sage)','Protein'],['var(--berry)','Fat'],['var(--gold)','Carbs']].map(([c,l]) => el('span', {style:{display:'flex',alignItems:'center',gap:'4px'}}, el('span', {style:{width:'9px',height:'9px',borderRadius:'3px',background:c}}), l)),
+    el('span', { style:{marginLeft:'auto', fontFamily:'var(--mono)', color:'var(--ink)'} }, macroData.splitLabel)
+  ));
+  if (macroData.insight) macroCard.appendChild(el('div', { style:{fontSize:'12px', color:'var(--ink-soft)', marginTop:'10px', lineHeight:1.55, borderTop:'1px solid var(--line)', paddingTop:'10px'} }, macroData.insight));
+  wrap.appendChild(macroCard);
+
+  // This week's movement
+  wrap.appendChild(SectionLabel("This week's movement"));
+  wrap.appendChild(MovementCard());
+
+  // Iron & energy
+  wrap.appendChild(SectionLabel('Iron & energy ⚘'));
+  wrap.appendChild(IronEnergyCard());
+
+  // This week's note
+  wrap.appendChild(SectionLabel("This week's note"));
+  if (state.plan && state.plan.note) {
+    wrap.appendChild(Card([
+      el('div', { style:{fontSize:'13px', lineHeight:1.6} }, state.plan.note),
+      el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginTop:'8px'} }, 'From your Coach check-in · ' + new Date(state.plan.generatedAt).toLocaleDateString('en-US',{month:'long', day:'numeric'}))
+    ], { background:'var(--sage-soft)', border:'1px solid rgba(127,163,131,.2)' }));
+  } else {
+    wrap.appendChild(Card(el('div', { style:{fontSize:'13px', color:'var(--ink-soft)'} }, 'Import a Coach check-in to see your weekly note here.'), { background:'var(--sage-soft)', border:'1px solid rgba(127,163,131,.2)' }));
+  }
+
+  // Coach check-in
+  wrap.appendChild(SectionLabel('Coach check-in (every 1–2 weeks)'));
+  const checkinCard = Card([]);
+  const ol = el('ol', { style:{margin:0, padding:'0 0 0 18px', fontSize:'12.5px', color:'var(--ink-soft)', lineHeight:1.9} },
+    el('li', {}, el('b', {style:{color:'var(--ink)'}}, 'Export backup'), ' below'),
+    el('li', {}, 'Attach it to your Claude project + any receipt photos'),
+    el('li', {}, 'Import the returned ', el('span', {class:'mono'}, 'plan.json'), ' + ', el('span', {class:'mono'}, 'fridge.json'))
+  );
+  checkinCard.appendChild(ol);
+  checkinCard.appendChild(el('button', { class:'btn-primary', style:{marginTop:'12px', width:'100%'}, onClick: exportBackup }, 'Export backup for Coach'));
+  checkinCard.appendChild(ImportButton());
+  wrap.appendChild(checkinCard);
+
+  wrap.appendChild(el('div', { style:{height:'12px'} }));
+  return wrap;
+}
+
+function weightSeries(n) {
+  const keys = [];
+  for (let i=n-1;i>=0;i--) keys.push(addDaysKey(todayKey(), -i));
+  return keys.map(k => state.log[k] && state.log[k].weightLb).filter(w => w !== undefined && w !== null);
+}
+function priorWeekAvg() {
+  const keys = Object.keys(state.log).sort().filter(k => state.log[k].weightLb !== undefined);
+  if (keys.length < 8) return null;
+  const prior = keys.slice(-14, -7).map(k => state.log[k].weightLb);
+  if (!prior.length) return null;
+  return prior.reduce((a,b)=>a+b,0)/prior.length;
+}
+
+function sparklineSVG(weights) {
+  const svgns = 'http://www.w3.org/2000/svg';
+  const w = 280, h = 70, pad = 6;
+  const svg = document.createElementNS(svgns, 'svg');
+  svg.setAttribute('width', '100%'); svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  if (weights.length < 2) {
+    const t = document.createElementNS(svgns, 'text');
+    t.setAttribute('x', w/2); t.setAttribute('y', h/2); t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('style', 'font-family:var(--body);font-size:12px;fill:var(--ink-soft)');
+    t.textContent = 'Log a few weigh-ins to see your trend';
+    svg.appendChild(t);
+    return svg;
+  }
+  const min = Math.min(...weights) - .3, max = Math.max(...weights) + .3;
+  const x = i => pad + i*(w-2*pad)/(weights.length-1);
+  const y = v => h - pad - (v-min)/(max-min||1)*(h-2*pad);
+  const mk = (tag, attrs) => { const e = document.createElementNS(svgns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  svg.appendChild(mk('polyline', { points: weights.map((v,i)=>`${x(i)},${y(v)}`).join(' '), fill:'none', stroke:'var(--berry-soft)', 'stroke-width':2 }));
+  weights.forEach((v,i) => svg.appendChild(mk('circle', { cx:x(i), cy:y(v), r:2.4, fill:'var(--berry)', opacity:.35 })));
+  const avgPts = weights.map((_,i) => { const s = weights.slice(Math.max(0,i-6), i+1); return `${x(i)},${y(s.reduce((a,b)=>a+b,0)/s.length)}`; }).join(' ');
+  svg.appendChild(mk('polyline', { points: avgPts, fill:'none', stroke:'var(--sage)', 'stroke-width':2.5, 'stroke-linecap':'round' }));
+  return svg;
+}
+
+function checkFastLoss() {
+  const keys = Object.keys(state.log).sort().filter(k => state.log[k].weightLb !== undefined);
+  if (keys.length < 21) return false;
+  const w = latestWeight() || 150;
+  const limitLbWk = w * 0.01;
+  const weekAvg = (offset) => { const s = keys.slice(keys.length-7-offset, keys.length-offset).map(k=>state.log[k].weightLb); return s.length?s.reduce((a,b)=>a+b,0)/s.length:null; };
+  const a0 = weekAvg(0), a1 = weekAvg(7), a2 = weekAvg(14);
+  if (a0===null||a1===null||a2===null) return false;
+  const loss1 = a1 - a0, loss2 = a2 - a1;
+  return loss1 > limitLbWk && loss2 > limitLbWk;
+}
+
+function macroTrendData() {
+  const keys = [];
+  for (let i=13;i>=0;i--) keys.push(addDaysKey(todayKey(), -i));
+  const target = currentTargets();
+  const days = keys.map(k => {
+    const dl = state.log[k];
+    if (!dl || !dl.entries || !dl.entries.length) return null;
+    const t = dayTotals(dl.entries);
+    return t;
+  });
+  const logged = days.filter(d => d);
+  let splitLabel = 'avg —';
+  let pAvg=0,cAvg=0,fAvg=0,fbAvg=0;
+  if (logged.length) {
+    const sums = logged.reduce((s,d) => ({p:s.p+d.protein*4, c:s.c+d.carbs*4, f:s.f+d.fat*9, fb:s.fb+d.fiber, cals:s.cals+d.cals}), {p:0,c:0,f:0,fb:0,cals:0});
+    const totalCals = sums.cals || 1;
+    pAvg = Math.round(sums.p/totalCals*100); cAvg = Math.round(sums.c/totalCals*100); fAvg = Math.round(sums.f/totalCals*100);
+    fbAvg = sums.fb / logged.length;
+    splitLabel = `avg ${pAvg}P / ${cAvg}C / ${fAvg}F`;
+  }
+  let insight = null;
+  if (logged.length) {
+    const gaps = [
+      { key:'fiber', label:'Fiber', avg: fbAvg, target: target.fiber, unit:'g' },
+    ];
+    const worst = gaps.filter(g => g.avg < g.target).sort((a,b) => (a.target-a.avg)-(b.target-b.avg)).pop();
+    if (worst) {
+      const topSources = state.foods.filter(f => f.fiber > 3).sort((a,b) => b.fiber-a.fiber).slice(0,2).map(f=>f.name);
+      insight = `${worst.label} averages ${worst.avg.toFixed(0)}g vs ${worst.target}g` + (topSources.length ? ` — the ${topSources.join(' and ')} in your fridge close that gap.` : '.');
+    }
+  }
+  return { days, target, splitLabel, insight };
+}
+
+function macroBarsSVG(data) {
+  const host = el('div', { style:{display:'flex', gap:'3px', alignItems:'flex-end', height:'64px'} });
+  data.days.forEach(d => {
+    if (!d) { host.appendChild(el('div', { style:{flex:1, height:'4%', background:'var(--line)', borderRadius:'3px'} })); return; }
+    const pCal = d.protein*4, fCal = d.fat*9, cCal = d.carbs*4, total = pCal+fCal+cCal || 1;
+    const heightPct = clamp(d.cals / (data.target.cals||1) * 100, 8, 100);
+    const col = el('div', { style:{flex:1, height: heightPct+'%', display:'flex', flexDirection:'column', borderRadius:'3px', overflow:'hidden'} },
+      el('div', { style:{flex: cCal, background:'var(--gold)'} }),
+      el('div', { style:{flex: fCal, background:'var(--berry)'} }),
+      el('div', { style:{flex: pCal, background:'var(--sage)'} })
+    );
+    host.appendChild(col);
+  });
+  return host;
+}
+
+function MovementCard() {
+  const key = todayKey();
+  const dayLog = state.log[key] || (state.log[key] = { entries: [] });
+  if (!dayLog.activities) dayLog.activities = [];
+
+  const card = Card([]);
+  const chipsRow = el('div', { style:{display:'flex', gap:'8px', overflowX:'auto', paddingBottom:'4px'} });
+
+  function addActivity(type, opts) {
+    const kcal = activityKcal(type, opts);
+    dayLog.activities.push({ id: uid('a'), type, label: opts.label, minutes: opts.minutes, miles: opts.miles, kcal });
+    save(); showToast('Activity logged'); render();
+  }
+
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => addActivity('lift', { label:'Weights 45m', minutes:45 }) }, 'Weights 45m'));
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => openSheet(() => MilesSheet('walk', 'Walk')) }, 'Walk (mi)'));
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => openSheet(() => MilesSheet('hike', 'Hike')) }, 'Hike (mi)'));
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => addActivity('bike', { label:'Bike 30m', minutes:30 }) }, 'Bike 30m'));
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => openSheet(() => MilesSheet('run', 'Run')) }, 'Run (mi)'));
+  chipsRow.appendChild(el('button', { class:'chip', onClick: () => openSheet(() => CustomActivitySheet()) }, 'Custom'));
+  card.appendChild(chipsRow);
+
+  if (dayLog.activities.length) {
+    const list = el('div', { style:{marginTop:'8px'} });
+    dayLog.activities.forEach((a,i) => {
+      list.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 4px', borderTop: i?'1px solid var(--line)':'none'}, onClick: () => {
+        dayLog.activities.splice(i,1); save(); render();
+      } },
+        el('div', { style:{fontSize:'13px'} }, a.label),
+        el('span', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)'} }, a.kcal)
+      ));
+    });
+    card.appendChild(list);
+  }
+
+  const weekKcal = weekActivityKcal();
+  card.appendChild(el('div', { style:{fontSize:'12px', color:'var(--ink)', marginTop:'10px', fontWeight:'600'} }, `This week: ${weekKcal.count} workout${weekKcal.count===1?'':'s'} · ~${weekKcal.kcal} kcal`));
+  card.appendChild(el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginTop:'4px', lineHeight:1.5} },
+    'Your daily budget already includes everyday movement — housework, errands, patient care. Log workouts only.'));
+  return card;
+}
+
+function weekActivityKcal() {
+  const now = new Date();
+  const dow = now.getDay();
+  let count = 0, kcal = 0;
+  for (let i=0;i<=dow;i++) {
+    const k = addDaysKey(todayKey(), -i);
+    const dl = state.log[k];
+    if (dl && dl.activities) { count += dl.activities.length; kcal += dl.activities.reduce((s,a)=>s+a.kcal,0); }
+  }
+  return { count, kcal };
+}
+
+function MilesSheet(type, label) {
+  let miles = '';
+  const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target===back) closeSheet(); } });
+  const sheet = el('div', { class:'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, label));
+  const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Miles', step:'0.1', style:{marginBottom:'10px'}, onInput: e => { miles = e.target.value; estimate.textContent = estText(); } });
+  sheet.appendChild(inp);
+  const estimate = el('div', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)', marginBottom:'12px'} });
+  function estText() { const m = parseFloat(miles); if (!m) return ''; return `Estimated ${activityKcal(type, {miles:m})} kcal`; }
+  sheet.appendChild(estimate);
+  sheet.appendChild(el('button', { class:'btn-primary', style:{width:'100%'}, onClick: () => {
+    const m = parseFloat(miles); if (!m) return;
+    const key = todayKey(); const dl = state.log[key] || (state.log[key]={entries:[]}); if (!dl.activities) dl.activities=[];
+    dl.activities.push({ id: uid('a'), type, label: `${label} ${m}mi`, miles: m, kcal: activityKcal(type, {miles:m}) });
+    save(); closeSheet(); showToast('Activity logged'); render();
+  } }, 'Log activity'));
+  back.appendChild(sheet);
+  return back;
+}
+
+function CustomActivitySheet() {
+  let minutes = '', activityType = 'custom';
+  const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target===back) closeSheet(); } });
+  const sheet = el('div', { class:'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, 'Custom activity'));
+  const sel = el('select', { class:'field-input', style:{marginBottom:'10px'}, onChange: e => { activityType = e.target.value; estimate.textContent = estText(); } });
+  [['custom','Custom'],['yoga','Yoga'],['swim','Swim'],['lift','Weights'],['bike','Bike']].forEach(([v,l]) => sel.appendChild(el('option', { value:v }, l)));
+  sheet.appendChild(sel);
+  const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Minutes', style:{marginBottom:'10px'}, onInput: e => { minutes = e.target.value; estimate.textContent = estText(); } });
+  sheet.appendChild(inp);
+  const estimate = el('div', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)', marginBottom:'12px'} });
+  function estText() { const m = parseFloat(minutes); if (!m) return ''; return `Estimated ${activityKcal(activityType, {minutes:m})} kcal`; }
+  sheet.appendChild(estimate);
+  sheet.appendChild(el('button', { class:'btn-primary', style:{width:'100%'}, onClick: () => {
+    const m = parseFloat(minutes); if (!m) return;
+    const key = todayKey(); const dl = state.log[key] || (state.log[key]={entries:[]}); if (!dl.activities) dl.activities=[];
+    const labelMap = { custom:'Custom', yoga:'Yoga', swim:'Swim', lift:'Weights', bike:'Bike' };
+    dl.activities.push({ id: uid('a'), type: activityType, label: `${labelMap[activityType]} ${m}m`, minutes: m, kcal: activityKcal(activityType, {minutes:m}) });
+    save(); closeSheet(); showToast('Activity logged'); render();
+  } }, 'Log activity'));
+  back.appendChild(sheet);
+  return back;
+}
+
+function IronEnergyCard() {
+  const target = currentTargets();
+  const last14 = last14Averages();
+  const ironAvg = last14.ironMg;
+  const card = Card([], { background:'#F4EBF1', border:'1px solid rgba(139,94,126,.13)' });
+  card.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px'} },
+    el('span', { style:{fontSize:'12px', color:'var(--ink-soft)', fontWeight:'600'} }, '14-day avg iron'),
+    el('span', { class:'mono', style:{fontSize:'15px', color: (ironAvg!==null && ironAvg>=15) ? 'var(--sage)' : 'var(--iron)'} },
+      ironAvg!==null?ironAvg.toFixed(1)+'mg':'—', el('span', {style:{fontSize:'11px', color:'var(--ink-soft)'}}, ` / ${target.ironMg}mg goal`))
+  ));
+
+  const { n, lowBoth } = ironEnergyCorrelation();
+  if (n >= 5) {
+    card.appendChild(el('div', { style:{fontSize:'12.5px', lineHeight:1.6} },
+      `${lowBoth} of your recent low-energy days were also low-iron days. Two habits move this most:`));
+  }
+  const ul = el('ul', { style:{margin:'8px 0 0', padding:'0 0 0 18px', fontSize:'12px', color:'var(--ink-soft)', lineHeight:1.7} },
+    el('li', {}, 'Pair iron foods with ', el('b', {style:{color:'var(--ink)'}}, 'vitamin C'), ' (citrus, peppers) — absorption roughly triples'),
+    el('li', {}, 'Keep ', el('b', {style:{color:'var(--ink)'}}, 'coffee & tea ~1hr away'), ' from iron-rich meals — they block absorption')
+  );
+  card.appendChild(ul);
+
+  const key = todayKey();
+  const dl = state.log[key] || (state.log[key]={entries:[]});
+  const h = new Date().getHours();
+  const which = h < 14 ? 'AM' : 'PM';
+  const currentVal = which === 'AM' ? dl.energyAM : dl.energyPM;
+  const row = el('div', { style:{display:'flex', gap:'8px', marginTop:'12px', alignItems:'center', flexWrap:'wrap'} },
+    el('span', { style:{fontSize:'11.5px', color:'var(--ink-soft)'} }, which==='AM' ? "How's your energy this morning?" : "How's your energy this afternoon?")
+  );
+  ['low','ok','good'].forEach((lbl, i) => {
+    row.appendChild(el('button', { style:{border: `1px solid ${currentVal===i+1?'var(--iron)':'var(--line)'}`, background: currentVal===i+1?'#EBDCE8':'#fff', color:'var(--ink)', borderRadius:'10px', padding:'6px 11px', fontSize:'11.5px', cursor:'pointer'},
+      onClick: () => { if (which==='AM') dl.energyAM = i+1; else dl.energyPM = i+1; save(); showToast('Energy logged'); render(); } }, lbl));
+  });
+  card.appendChild(row);
+
+  card.appendChild(el('div', { style:{fontSize:'10.5px', color:'var(--ink-soft)', marginTop:'12px', lineHeight:1.5, borderTop:'1px solid rgba(139,94,126,.15)', paddingTop:'10px'} },
+    "Food tracking supports — it doesn't replace — your doctor's plan for iron. Keep up with labs and any supplements they've prescribed."));
+  return card;
+}
+
+function ironEnergyCorrelation() {
+  const keys = [];
+  for (let i=13;i>=0;i--) keys.push(addDaysKey(todayKey(), -i));
+  let n = 0, lowBoth = 0;
+  keys.forEach(k => {
+    const dl = state.log[k];
+    if (!dl) return;
+    const worst = Math.min(dl.energyAM || 99, dl.energyPM || 99);
+    if (worst === 99) return;
+    n++;
+    if (!dl.entries || !dl.entries.length) return;
+    const t = dayTotals(dl.entries);
+    if (t.ironMg < 12 && worst === 1) lowBoth++;
+  });
+  return { n, lowBoth };
+}
+
+/* ============================= Settings sheet ============================= */
+
+function SettingsSheet() {
+  const p = Object.assign({}, state.profile);
+  const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target===back) closeSheet(); } });
+  const sheet = el('div', { class:'sheet' });
+  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
+  sheet.appendChild(el('div', { class:'sheet-title' }, 'Settings'));
+
+  const field = (label, key, numeric) => {
+    const wrap = el('div', { style:{marginBottom:'10px'} });
+    wrap.appendChild(el('label', { class:'field-label' }, label));
+    wrap.appendChild(el('input', { type: numeric?'number':'text', inputmode: numeric?'decimal':undefined, value: p[key],
+      onInput: e => p[key] = numeric ? parseFloat(e.target.value)||0 : e.target.value }));
+    return wrap;
+  };
+  sheet.appendChild(field('Name', 'name'));
+  sheet.appendChild(field('Height (in)', 'heightIn', true));
+  sheet.appendChild(field('Birth year', 'birthYear', true));
+  sheet.appendChild(field('Goal weight (lb)', 'goalWeightLb', true));
+
+  const paceWrap = el('div', { style:{marginBottom:'10px'} });
+  paceWrap.appendChild(el('label', { class:'field-label' }, `Goal pace: ${p.goalRateLbPerWk.toFixed(1)} lb/wk`));
+  const paceInp = el('input', { type:'range', min:'0.5', max:'1.0', step:'0.1', value:p.goalRateLbPerWk, style:{width:'100%'},
+    onInput: e => { p.goalRateLbPerWk = parseFloat(e.target.value); paceWrap.firstChild.textContent = `Goal pace: ${p.goalRateLbPerWk.toFixed(1)} lb/wk`; } });
+  paceWrap.appendChild(paceInp);
+  sheet.appendChild(paceWrap);
+
+  const actWrap = el('div', { style:{marginBottom:'12px'} });
+  actWrap.appendChild(el('label', { class:'field-label' }, 'Activity baseline'));
+  const actRow = el('div', { style:{display:'flex', gap:'8px'} });
+  [[1.3,'Lighter'],[1.45,'Typical'],[1.6,'Very active']].forEach(([v,l]) => {
+    actRow.appendChild(el('button', { style:{flex:1, border:`1px solid ${p.activityBase===v?'var(--berry)':'var(--line)'}`, background: p.activityBase===v?'var(--berry-soft)':'#fff', borderRadius:'10px', padding:'8px 4px', fontSize:'11.5px', cursor:'pointer'},
+      onClick: () => { p.activityBase = v; render2(); } }, `${v}\n${l}`));
+  });
+  actWrap.appendChild(actRow);
+  sheet.appendChild(actWrap);
+  function render2() { closeSheet(); openSheet(() => { const s = SettingsSheet(); Object.assign(p, p); return s; }); }
+
+  sheet.appendChild(el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginBottom:'12px'} },
+    'Targets recompute from these numbers using §7.1. You can also override targets directly by importing a plan.json from Coach.'));
+
+  sheet.appendChild(el('button', { class:'btn-primary', style:{width:'100%'}, onClick: () => {
+    state.profile = p;
+    const t = computeTargets(p, weightForBMR());
+    state.targets = t;
+    save(); closeSheet();
+    showToast(t.clamped ? 'Target set to the 1,200 cal minimum' : 'Settings saved');
+    render();
+  } }, 'Save & recompute targets'));
+
+  back.appendChild(sheet);
+  return back;
+}
+
+/* ============================= Import / Export (§6) ============================= */
+
+function exportBackup() {
+  const payload = {
+    berryType: 'backup', version: 1, exportedAt: new Date().toISOString(),
+    profile: state.profile, targets: state.targets, foods: state.foods, meals: state.meals, log: state.log
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `berry-backup-${todayKey()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  state.meta.lastExportAt = new Date().toISOString();
+  save();
+  showToast('backup.json exported');
+}
+
+function handleImportFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      routeImport(data);
+    } catch (err) {
+      showToast('Could not read that file');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function routeImport(data) {
+  if (!data || !data.berryType) { showToast('Not a Berry file'); return; }
+  if (data.berryType === 'backup') importBackup(data);
+  else if (data.berryType === 'fridge') importFridge(data);
+  else if (data.berryType === 'plan') importPlan(data);
+  else showToast('Unknown Berry file type');
+}
+
+function importBackup(data) {
+  if (!confirm('Restore from this backup? This replaces all current data.')) return;
+  state.profile = data.profile; state.targets = data.targets; state.foods = data.foods || [];
+  state.meals = data.meals || []; state.log = data.log || {};
+  saveNow();
+  showToast('Backup restored');
+  render();
+}
+
+function importFridge(data) {
+  let added = 0, updated = 0, skipped = 0;
+  (data.foods || []).forEach(nf => {
+    const existing = state.foods.find(f => f.name.toLowerCase() === nf.name.toLowerCase());
+    if (existing) {
+      Object.assign(existing, { cals:nf.cals, protein:nf.protein, carbs:nf.carbs, fat:nf.fat, fiber:nf.fiber, ironMg:nf.ironMg, store:nf.store, serving:nf.serving || existing.serving });
+      updated++;
+    } else {
+      state.foods.push({ id: uid('f'), name:nf.name, serving:nf.serving||'', cals:nf.cals||0, protein:nf.protein||0, carbs:nf.carbs||0, fat:nf.fat||0, fiber:nf.fiber||0, ironMg:nf.ironMg||0,
+        store:nf.store||null, useCount:0, lastUsed:null, source:'coach', createdAt:new Date().toISOString() });
+      added++;
+    }
+  });
+  (data.meals || []).forEach(nm => {
+    const items = [];
+    let mealSkipped = false;
+    (nm.items || []).forEach(it => {
+      let f = state.foods.find(ff => ff.name.toLowerCase() === it.foodName.toLowerCase());
+      if (!f && it.food) {
+        f = { id: uid('f'), name: it.foodName, serving: it.food.serving||'', cals: it.food.cals||0, protein: it.food.protein||0, carbs: it.food.carbs||0, fat: it.food.fat||0, fiber: it.food.fiber||0, ironMg: it.food.ironMg||0,
+          store: 'Other', useCount:0, lastUsed:null, source:'coach', createdAt:new Date().toISOString() };
+        state.foods.push(f); added++;
+      }
+      if (f) items.push({ foodId: f.id, portions: it.portions || 1 });
+      else mealSkipped = true;
+    });
+    const existingMeal = state.meals.find(m => m.name.toLowerCase() === nm.name.toLowerCase());
+    if (existingMeal) { existingMeal.items = items; existingMeal.desc = nm.desc || existingMeal.desc; updated++; }
+    else { state.meals.push({ id: uid('m'), name: nm.name, desc: nm.desc||'', items, createdAt: new Date().toISOString(), useCount: 0 }); added++; }
+    if (mealSkipped) skipped++;
+  });
+  save();
+  showToast(`Fridge updated · ${added} new items · ${updated} updated` + (skipped ? ` · ${skipped} skipped` : ''));
+  render();
+}
+
+function importPlan(data) {
+  if (!data.targets || data.targets.cals < 1200) {
+    showToast("That plan's calorie target is below our 1,200 minimum — not imported. Please check with Coach.");
+    return;
+  }
+  state.targets = Object.assign({}, data.targets, { updatedAt: new Date().toISOString(), source: 'plan' });
+  state.plan = { note: data.note || '', weeklyFocus: data.weeklyFocus || [], generatedAt: data.generatedAt || new Date().toISOString() };
+  save();
+  showToast('Plan imported');
+  render();
+}
+
+/* ============================= Setup wizard (§5) ============================= */
+
+function SetupWizard() {
+  const draft = { name:'', heightIn:'', currentWeight:'', birthYear:'', goalWeightLb:'', goalRateLbPerWk: 0.7, activityBase: 1.45 };
+  let step = 0;
+  const host = el('div', { style:{minHeight:'100vh', display:'flex', flexDirection:'column', justifyContent:'center', padding:'24px', maxWidth:'480px', margin:'0 auto'} });
+
+  function stepCard(title, bodyEl, canNext, onNext, nextLabel) {
+    host.innerHTML = '';
+    host.appendChild(el('div', { class:'fade-up' },
+      el('div', { style:{fontFamily:'var(--serif)', fontSize:'24px', fontWeight:'600', marginBottom:'16px'} }, title),
+      bodyEl,
+      el('div', { style:{display:'flex', gap:'8px', marginTop:'22px'} },
+        step > 0 ? el('button', { class:'btn-secondary', style:{flex:1}, onClick: () => { step--; renderStep(); } }, 'Back') : null,
+        el('button', { class:'btn-primary', style:{flex:2}, disabled: !canNext, onClick: onNext }, nextLabel || 'Next')
+      )
+    ));
+  }
+
+  function renderStep() {
+    if (step === 0) {
+      const inp = el('input', { type:'text', placeholder:'Your name', value: draft.name, onInput: e => { draft.name = e.target.value; renderStep(); } });
+      stepCard("Let's set up Berry", inp, draft.name.trim().length > 0, () => { step++; renderStep(); });
+    } else if (step === 1) {
+      const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Height in inches', value: draft.heightIn, onInput: e => { draft.heightIn = e.target.value; renderStep(); } });
+      stepCard('How tall are you?', inp, parseFloat(draft.heightIn) > 0, () => { step++; renderStep(); });
+    } else if (step === 2) {
+      const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Current weight (lb)', value: draft.currentWeight, onInput: e => { draft.currentWeight = e.target.value; renderStep(); } });
+      stepCard("What's your current weight?", inp, parseFloat(draft.currentWeight) > 0, () => { step++; renderStep(); });
+    } else if (step === 3) {
+      const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Birth year', value: draft.birthYear, onInput: e => { draft.birthYear = e.target.value; renderStep(); } });
+      stepCard('What year were you born?', inp, parseFloat(draft.birthYear) > 1900, () => { step++; renderStep(); });
+    } else if (step === 4) {
+      const inp = el('input', { type:'number', inputmode:'decimal', placeholder:'Goal weight (lb)', value: draft.goalWeightLb, onInput: e => { draft.goalWeightLb = e.target.value; renderStep(); } });
+      stepCard("What's your goal weight?", inp, parseFloat(draft.goalWeightLb) > 0, () => { step++; renderStep(); });
+    } else if (step === 5) {
+      const wrap = el('div', {});
+      wrap.appendChild(el('div', { style:{fontSize:'13px', color:'var(--ink-soft)', marginBottom:'10px'} }, `Pace: ${draft.goalRateLbPerWk.toFixed(1)} lb/wk`));
+      wrap.appendChild(el('input', { type:'range', min:'0.5', max:'1.0', step:'0.1', value: draft.goalRateLbPerWk, style:{width:'100%'},
+        onInput: e => { draft.goalRateLbPerWk = parseFloat(e.target.value); wrap.firstChild.textContent = `Pace: ${draft.goalRateLbPerWk.toFixed(1)} lb/wk`; } }));
+      stepCard('How fast do you want to lose?', wrap, true, () => { step++; renderStep(); });
+    } else if (step === 6) {
+      const wrap = el('div', {});
+      wrap.appendChild(el('div', { style:{fontSize:'13px', color:'var(--ink-soft)', lineHeight:1.6, marginBottom:'12px'} },
+        'By default we assume your days already include a good amount of movement — housework, errands, parenting, patient care — at a 1.45× baseline. Workouts get added on top, separately.'));
+      const row = el('div', { style:{display:'flex', gap:'8px'} });
+      [[1.3,'Lighter days'],[1.45,'Typical (default)'],[1.6,'Very active days']].forEach(([v,l]) => {
+        row.appendChild(el('button', { style:{flex:1, border:`1px solid ${draft.activityBase===v?'var(--berry)':'var(--line)'}`, background: draft.activityBase===v?'var(--berry-soft)':'#fff', borderRadius:'12px', padding:'10px 6px', fontSize:'12px', cursor:'pointer'},
+          onClick: () => { draft.activityBase = v; renderStep(); } }, l));
+      });
+      wrap.appendChild(row);
+      stepCard('About your days', wrap, true, () => { step++; renderStep(); });
+    } else if (step === 7) {
+      const profile = {
+        name: draft.name.trim(), sex: 'female', birthYear: parseInt(draft.birthYear),
+        heightIn: parseFloat(draft.heightIn), goalWeightLb: parseFloat(draft.goalWeightLb),
+        goalRateLbPerWk: draft.goalRateLbPerWk, activityBase: draft.activityBase, createdAt: new Date().toISOString()
+      };
+      const targets = computeTargets(profile, parseFloat(draft.currentWeight));
+      const wrap = el('div', {});
+      wrap.appendChild(el('div', { style:{fontSize:'13px', color:'var(--ink-soft)', marginBottom:'14px'} }, "Here's your plan:"));
+      [['Daily calories', fmt(targets.cals)], ['Protein', targets.protein+'g'], ['Carbs', targets.carbs+'g'], ['Fat', targets.fat+'g'], ['Fiber', targets.fiber+'g'], ['Iron', targets.ironMg+'mg']].forEach(([l,v]) => {
+        wrap.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid var(--line)'} },
+          el('span', { style:{color:'var(--ink-soft)', fontSize:'13px'} }, l), el('span', { class:'mono', style:{fontSize:'14px'} }, v)));
+      });
+      if (targets.clamped) wrap.appendChild(el('div', { style:{fontSize:'11.5px', color:'var(--ink-soft)', marginTop:'10px'} }, 'Your calculated target was below 1,200 — we set it to a safe minimum instead.'));
+      stepCard('Your plan', wrap, true, () => {
+        state.profile = profile; state.targets = targets;
+        const key = todayKey();
+        state.log[key] = state.log[key] || { entries: [] };
+        state.log[key].weightLb = parseFloat(draft.currentWeight);
+        saveNow();
+        render();
+      }, "Let's go");
+    }
+  }
+  renderStep();
+  return host;
+}
+
+/* ============================= Boot ============================= */
+
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+</script>
+</body>
+</html>
