@@ -1,0 +1,18 @@
+{
+  "berryType": "plan",
+  "version": 1,
+  "generatedAt": "2026-07-12T00:00:00Z",
+  "targets": {
+    "cals": 1625,
+    "protein": 115,
+    "carbs": 160,
+    "fat": 54,
+    "fiber": 25,
+    "ironMg": 18
+  },
+  "note": "Trending -0.7 lb/week - right on pace. Protein averaged 108g. Iron ran low Tue-Thu and energy dipped those same days: try the smoothie (spinach + banana's vitamin C) on busy mornings.",
+  "weeklyFocus": [
+    "Pair iron foods with citrus",
+    "Two lifting sessions"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "berryType": "fridge",
+  "version": 1,
+  "generatedAt": "2026-07-12T00:00:00Z",
+  "foods": [
+    {
+      "name": "Kirkland rotisserie chicken",
+      "serving": "3 oz",
+      "cals": 140,
+      "protein": 19,
+      "carbs": 0,
+      "fat": 7,
+      "fiber": 0,
+      "ironMg": 0.9,
+      "store": "Costco"
+    },
+    {
+      "name": "Organic lentil soup",
+      "serving": "1 cup",
+      "cals": 160,
+      "protein": 9,
+      "carbs": 26,
+      "fat": 2,
+      "fiber": 8,
+      "ironMg": 3.3,
+      "store": "Trader Joe's"
+    }
+  ],
+  "meals": [
+    {
+      "name": "Taco night plate",
+      "desc": "2 beef tacos · slaw · avocado",
+      "items": [
+        { "foodName": "Kirkland rotisserie chicken", "portions": 1 },
+        {
+          "foodName": "Avocado",
+          "portions": 1,
+          "food": {
+            "serving": "1/2 avocado",
+            "cals": 120,
+            "protein": 1,
+            "carbs": 6,
+            "fat": 11,
+            "fiber": 5,
+            "ironMg": 0.6
+          }
+        }
+      ]
+    }
+  ]
+}
