@@ -1,0 +1,8 @@
+{
+  "name": "berry",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/check.js",
+    "check": "npm test"
+  }
+}
