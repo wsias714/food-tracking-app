@@ -1,4 +1,4 @@
-// In-app Feedback button (shared module, see ~/Projects/_shared/feedback). Items go to Dropbox Apps/Berry/feedback/.
+// In-app Feedback button (shared module, see ~/Projects/_shared/feedback). Items go to Dropbox Apps/Berry_app/feedback/.
 // The first Send asks to connect Dropbox (one tap, then it is remembered); until the app key is set in config.js,
 // or if the phone is offline, the item stays on the device and the panel offers email.
 import { initFeedback } from "./feedback.js";

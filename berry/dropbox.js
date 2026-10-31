@@ -1,5 +1,5 @@
 // Minimal Dropbox client for Berry: OAuth PKCE (no secret, refresh token kept on the device) and create-only uploads
-// into the app's own folder (Apps/Berry/). Berry's data stays in localStorage; this carries feedback today and is the
+// into the app's own folder (Apps/Berry_app/). Berry's data stays in localStorage; this carries feedback today and is the
 // start of the sync described in the mobile-dropbox-sync skill.
 import { DROPBOX_APP_KEY } from "./config.js";
 
