@@ -1,4 +1,15 @@
-// In-app Feedback button (shared module, see ~/Projects/_shared/feedback). Berry has no Dropbox sync, so an item
-// is kept on the device and sent by email from the panel (the address is asked for once and never stored in this repo).
+// In-app Feedback button (shared module, see ~/Projects/_shared/feedback). Items go to Dropbox Apps/Berry/feedback/.
+// The first Send asks to connect Dropbox (one tap, then it is remembered); until the app key is set in config.js,
+// or if the phone is offline, the item stays on the device and the panel offers email.
 import { initFeedback } from "./feedback.js";
-initFeedback({ app: "berry", bottom: 84 });
+import { configured, connected, create, finishAuthFromUrl, startAuth } from "./dropbox.js";
+
+const upload = configured() ? async (item) => {
+  if (!connected()) {
+    if (confirm("Connect Dropbox so Berry can send feedback? Your note is saved and will go as soon as you are back.")) await startAuth();
+    throw new Error("not connected");
+  }
+  await create(`/feedback/${item.id}.json`, JSON.stringify(item));
+} : undefined;
+
+finishAuthFromUrl().catch(() => {}).finally(() => initFeedback({ app: "berry", bottom: 84, upload }));
