@@ -1,4 +1,4 @@
-const CACHE = 'berry-v3';
+const CACHE = 'berry-v4';
 const SHELL = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const SHELL = [
   './feedback-init.js',
   './dropbox.js',
   './config.js',
+  './sync.js',
+  './merge.js',
 ];
 
 self.addEventListener('install', (e) => {

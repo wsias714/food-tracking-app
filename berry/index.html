@@ -221,12 +221,21 @@ let saveTimer = null;
 function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    state.meta.changedAt = new Date().toISOString();
     for (const k in KEYS) {
       if (state[k] !== null && state[k] !== undefined) {
         localStorage.setItem(KEYS[k], JSON.stringify(state[k]));
       }
     }
+    if (window.berrySync) window.berrySync.kick();
   }, 300);
+}
+
+/* Deleted records are kept as tombstones (with the record itself) so Dropbox sync cannot bring them back and
+   History can restore them. Tombstones older than 180 days are dropped by the merge. */
+function tombstone(kind, item, day) {
+  state.meta.tomb = state.meta.tomb || {};
+  state.meta.tomb[item.id] = { at: new Date().toISOString(), kind, day: day || null, item };
 }
 function saveNow() {
   clearTimeout(saveTimer);
@@ -636,6 +645,8 @@ function setEntryPortion(dayKey, entryId, p) {
 function removeEntry(dayKey, entryId) {
   const dayLog = state.log[dayKey];
   if (!dayLog) return;
+  const gone = dayLog.entries.find(x => x.id === entryId);
+  if (gone) tombstone('entry', gone, dayKey);
   dayLog.entries = dayLog.entries.filter(x => x.id !== entryId);
   save();
 }
@@ -764,6 +775,7 @@ function NewFoodSheet(opts) {
     btnRow.appendChild(el('button', { style:{flex:1, background:'#fff', color:'var(--berry)', border:'1px solid var(--line)', borderRadius:'14px', padding:'12px 0', fontSize:'14px', fontWeight:'600', cursor:'pointer'},
       onClick: () => {
         if (confirm('Remove from fridge? Logged history keeps its numbers.')) {
+          tombstone('food', opts.editFood);
           state.foods = state.foods.filter(x => x.id !== opts.editFood.id);
           state.meals.forEach(m => { m.items = m.items.filter(it => it.foodId !== opts.editFood.id); });
           save(); closeSheet(); showToast('Deleted'); render();
@@ -925,6 +937,23 @@ function HistoryScreen() {
     ));
   });
   wrap.appendChild(topCard);
+
+  const gone = Object.entries((state.meta.tomb) || {}).filter(([, t]) => t.gone !== false && t.item)
+    .sort((a, b) => (a[1].at < b[1].at ? 1 : -1)).slice(0, 40);
+  if (gone.length) {
+    wrap.appendChild(SectionLabel('Recently deleted'));
+    const delCard = Card([], { padding:'6px' });
+    gone.forEach(([id, t], i) => {
+      const what = t.kind === 'entry' ? 'Logged ' + t.item.name : t.kind === 'activity' ? 'Activity ' + t.item.label : (t.kind === 'meal' ? 'Meal ' : 'Fridge ') + t.item.name;
+      delCard.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px', padding:'9px 10px', borderTop: i?'1px solid var(--line)':'none'} },
+        el('div', { style:{fontSize:'13px'} }, what, el('div', { style:{fontSize:'10.5px', color:'var(--ink-soft)', marginTop:'2px'} },
+          (t.day ? t.day + ' · ' : '') + 'deleted ' + t.at.slice(0, 10))),
+        el('button', { class:'chip', onClick: () => {
+          if (window.berrySync && window.berrySync.restore(state, id)) { save(); showToast('Restored'); render(); }
+        } }, 'Restore')));
+    });
+    wrap.appendChild(delCard);
+  }
   wrap.appendChild(el('div', { style:{height:'12px'} }));
   return wrap;
 }
@@ -1097,7 +1126,7 @@ function MealEditSheet(meal) {
   if (!isNew) {
     btnRow.appendChild(el('button', { style:{flex:1, background:'#fff', color:'var(--berry)', border:'1px solid var(--line)', borderRadius:'14px', padding:'12px 0', fontSize:'14px', fontWeight:'600', cursor:'pointer'},
       onClick: () => {
-        if (confirm('Delete this meal?')) { state.meals = state.meals.filter(m => m.id !== meal.id); save(); closeSheet(); showToast('Deleted'); render(); }
+        if (confirm('Delete this meal?')) { tombstone('meal', meal); state.meals = state.meals.filter(m => m.id !== meal.id); save(); closeSheet(); showToast('Deleted'); render(); }
       } }, 'Delete'));
   }
   sheet.appendChild(btnRow);
@@ -1332,7 +1361,7 @@ function MovementCard() {
     const list = el('div', { style:{marginTop:'8px'} });
     dayLog.activities.forEach((a,i) => {
       list.appendChild(el('div', { style:{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 4px', borderTop: i?'1px solid var(--line)':'none'}, onClick: () => {
-        dayLog.activities.splice(i,1); save(); render();
+        tombstone('activity', a, key); dayLog.activities.splice(i,1); save(); render();
       } },
         el('div', { style:{fontSize:'13px'} }, a.label),
         el('span', { class:'mono', style:{fontSize:'12px', color:'var(--ink-soft)'} }, a.kcal)
@@ -1466,6 +1495,33 @@ function ironEnergyCorrelation() {
 
 /* ============================= Settings sheet ============================= */
 
+function DropboxCard() {
+  const box = el('div', { style:{border:'1px solid var(--line)', borderRadius:'12px', padding:'10px 12px', margin:'4px 0 14px'} });
+  const draw = () => {
+    box.innerHTML = '';
+    const bs = window.berrySync;
+    box.appendChild(el('div', { style:{fontWeight:'600', fontSize:'13px'} }, 'Dropbox backup'));
+    if (!bs) { box.appendChild(el('div', { style:{fontSize:'11.5px', color:'var(--ink-soft)', marginTop:'4px'} }, 'Not available yet. Reload the app.')); return; }
+    const on = bs.connected();
+    const st = bs.status;
+    const line = !on ? 'Not connected. Your entries are only on this phone.'
+      : st.error ? st.error
+      : st.text || (st.at ? 'Synced ' + st.at.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : 'Connected');
+    box.appendChild(el('div', { style:{fontSize:'11.5px', color: st.error ? 'var(--rose-off)' : 'var(--ink-soft)', margin:'4px 0 8px'} }, line));
+    const row = el('div', { style:{display:'flex', gap:'8px'} });
+    if (!on) row.appendChild(el('button', { class:'chip', onClick: () => bs.connect() }, 'Connect Dropbox'));
+    else {
+      row.appendChild(el('button', { class:'chip', onClick: () => bs.syncNow() }, 'Sync now'));
+      row.appendChild(el('button', { class:'chip', onClick: () => { bs.signOut(); draw(); } }, 'Disconnect'));
+    }
+    box.appendChild(row);
+  };
+  draw();
+  const again = () => { if (document.body.contains(box)) draw(); else window.removeEventListener('berry-sync', again); };
+  window.addEventListener('berry-sync', again);
+  return box;
+}
+
 function SettingsSheet() {
   const p = Object.assign({}, state.profile);
   const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target===back) closeSheet(); } });
@@ -1506,6 +1562,7 @@ function SettingsSheet() {
   sheet.appendChild(el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginBottom:'12px'} },
     'Targets recompute from these numbers using §7.1. You can also override targets directly by importing a plan.json from Coach.'));
 
+  sheet.appendChild(DropboxCard());
   sheet.appendChild(el('button', { class:'btn-primary', style:{width:'100%'}, onClick: () => {
     state.profile = p;
     const t = computeTargets(p, weightForBMR());

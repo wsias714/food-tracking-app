@@ -1,6 +1,5 @@
-// Minimal Dropbox client for Berry: OAuth PKCE (no secret, refresh token kept on the device) and create-only uploads
-// into the app's own folder (Apps/Berry_app/). Berry's data stays in localStorage; this carries feedback today and is the
-// start of the sync described in the mobile-dropbox-sync skill.
+// Minimal Dropbox client for Berry: OAuth PKCE (no secret, refresh token kept on the device), create-only uploads for
+// feedback, and rev-checked read/write for the data file (sync.js). Everything stays in the app's own folder (Apps/Berry_app/).
 import { DROPBOX_APP_KEY } from "./config.js";
 
 const K = { refresh: "berry-dbx-refresh", verifier: "berry-dbx-verifier" };
@@ -11,6 +10,7 @@ const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replac
 
 export const configured = () => !!DROPBOX_APP_KEY;
 export const connected = () => configured() && !!get(K.refresh);
+export function disconnect() { put(K.refresh, null); cached = { token: "", exp: 0 }; }
 
 async function tokenRequest(params) {
   const r = await fetch("https://api.dropboxapi.com/oauth2/token", { method: "POST", body: new URLSearchParams({ client_id: DROPBOX_APP_KEY, ...params }) });
@@ -59,3 +59,42 @@ export async function create(path, text) {
   if (r.ok || r.status === 409) return;
   throw new Error("Dropbox upload failed (" + r.status + ")");
 }
+
+async function api(host, path, arg, body) {
+  const r = await fetch(`https://${host}.dropboxapi.com/2/${path}`, {
+    method: "POST",
+    headers: host === "content"
+      ? { Authorization: "Bearer " + (await accessToken()), "Content-Type": "application/octet-stream", "Dropbox-API-Arg": JSON.stringify(arg) }
+      : { Authorization: "Bearer " + (await accessToken()), "Content-Type": "application/json" },
+    body: host === "content" ? body : JSON.stringify(arg),
+  });
+  if (r.ok) return r;
+  const text = await r.text().catch(() => "");
+  const e = new Error("Dropbox " + path + " failed (" + r.status + ")");
+  e.status = r.status;
+  e.scope = /missing_scope/.test(text);
+  e.conflict = r.status === 409 && /conflict/.test(text);
+  e.notFound = r.status === 409 && /not_found/.test(text);
+  throw e;
+}
+
+/** { text, rev } or null when the file does not exist yet. */
+export async function read(path) {
+  try {
+    const r = await api("content", "files/download", { path });
+    return { text: await r.text(), rev: JSON.parse(r.headers.get("dropbox-api-result")).rev };
+  } catch (e) { if (e.notFound) return null; throw e; }
+}
+
+/** Write with a rev check: rev = null creates only, a rev updates only that version. A lost race throws e.conflict. */
+export async function write(path, text, rev) {
+  const mode = rev ? { ".tag": "update", update: rev } : "add";
+  const r = await api("content", "files/upload", { path, mode, autorename: false, mute: true }, text);
+  return (await r.json()).size;
+}
+
+export async function list(path) {
+  try { return (await (await api("api", "files/list_folder", { path })).json()).entries; }
+  catch (e) { if (e.notFound) return []; throw e; }
+}
+export const remove = (path) => api("api", "files/delete_v2", { path });

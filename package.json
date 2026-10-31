@@ -2,7 +2,7 @@
   "name": "berry",
   "private": true,
   "scripts": {
-    "test": "node scripts/check.js",
+    "test": "node scripts/check.js && node --test scripts/merge.test.mjs",
     "check": "npm test"
   }
 }

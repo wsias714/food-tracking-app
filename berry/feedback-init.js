@@ -3,6 +3,7 @@
 // or if the phone is offline, the item stays on the device and the panel offers email.
 import { initFeedback } from "./feedback.js";
 import { configured, connected, create, finishAuthFromUrl, startAuth } from "./dropbox.js";
+import { syncNow } from "./sync.js";
 
 const upload = configured() ? async (item) => {
   if (!connected()) {
@@ -12,4 +13,4 @@ const upload = configured() ? async (item) => {
   await create(`/feedback/${item.id}.json`, JSON.stringify(item));
 } : undefined;
 
-finishAuthFromUrl().catch(() => {}).finally(() => initFeedback({ app: "berry", bottom: 84, upload }));
+finishAuthFromUrl().catch(() => {}).finally(() => { initFeedback({ app: "berry", bottom: 84, upload }); void syncNow(); });
