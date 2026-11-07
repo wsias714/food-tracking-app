@@ -398,6 +398,7 @@ function render() {
   else if (route.tab === 'fridge') screenHost.appendChild(FridgeScreen());
   else if (route.tab === 'meals') screenHost.appendChild(MealsScreen());
   else if (route.tab === 'coach') screenHost.appendChild(CoachScreen());
+  else if (route.tab === 'settings') screenHost.appendChild(SettingsScreen());
 
   root.appendChild(screenHost);
   root.appendChild(el('div', { class: 'toast-host' }));
@@ -412,6 +413,7 @@ function TabBar() {
     { id: 'fridge', label: 'Fridge', icon: '❆' },
     { id: 'meals', label: 'Meals', icon: '❀' },
     { id: 'coach', label: 'Coach', icon: '✦' },
+    { id: 'settings', label: 'Settings', icon: '⚙' },
   ];
   const bar = el('div', { class: 'tabbar' });
   TABS.forEach(t => {
@@ -1159,7 +1161,7 @@ function CoachScreen() {
       )
     ), { marginTop:'12px', cursor:'pointer' }
   ));
-  wrap.lastChild.addEventListener('click', () => openSheet(() => SettingsSheet()));
+  wrap.lastChild.addEventListener('click', () => { route.view = null; route.tab = 'settings'; render(); });
 
   // Weight trend
   wrap.appendChild(SectionLabel('Weight trend — the sage line is what matters'));
@@ -1522,58 +1524,59 @@ function DropboxCard() {
   return box;
 }
 
-function SettingsSheet() {
+function SettingsScreen() {
   const p = Object.assign({}, state.profile);
-  const back = el('div', { class:'sheet-backdrop', onClick: (e) => { if (e.target===back) closeSheet(); } });
-  const sheet = el('div', { class:'sheet' });
-  sheet.appendChild(el('button', { class:'close-x', onClick: closeSheet }, '✕'));
-  sheet.appendChild(el('div', { class:'sheet-title' }, 'Settings'));
+  const wrap = el('div', { class:'fade-up' });
+  wrap.appendChild(el('div', { style:{fontFamily:'var(--serif)', fontSize:'22px', fontWeight:'600', padding:'6px 0 8px'} }, 'Settings'));
 
   const field = (label, key, numeric) => {
-    const wrap = el('div', { style:{marginBottom:'10px'} });
-    wrap.appendChild(el('label', { class:'field-label' }, label));
-    wrap.appendChild(el('input', { type: numeric?'number':'text', inputmode: numeric?'decimal':undefined, value: p[key],
+    const w = el('div', { style:{marginBottom:'10px'} });
+    w.appendChild(el('label', { class:'field-label' }, label));
+    w.appendChild(el('input', { type: numeric?'number':'text', inputmode: numeric?'decimal':undefined, value: p[key],
       onInput: e => p[key] = numeric ? parseFloat(e.target.value)||0 : e.target.value }));
-    return wrap;
+    return w;
   };
-  sheet.appendChild(field('Name', 'name'));
-  sheet.appendChild(field('Height (in)', 'heightIn', true));
-  sheet.appendChild(field('Birth year', 'birthYear', true));
-  sheet.appendChild(field('Goal weight (lb)', 'goalWeightLb', true));
+  wrap.appendChild(SectionLabel('Profile'));
+  wrap.appendChild(field('Name', 'name'));
+  wrap.appendChild(field('Height (in)', 'heightIn', true));
+  wrap.appendChild(field('Birth year', 'birthYear', true));
+  wrap.appendChild(field('Goal weight (lb)', 'goalWeightLb', true));
 
   const paceWrap = el('div', { style:{marginBottom:'10px'} });
   paceWrap.appendChild(el('label', { class:'field-label' }, `Goal pace: ${p.goalRateLbPerWk.toFixed(1)} lb/wk`));
-  const paceInp = el('input', { type:'range', min:'0.5', max:'1.0', step:'0.1', value:p.goalRateLbPerWk, style:{width:'100%'},
-    onInput: e => { p.goalRateLbPerWk = parseFloat(e.target.value); paceWrap.firstChild.textContent = `Goal pace: ${p.goalRateLbPerWk.toFixed(1)} lb/wk`; } });
-  paceWrap.appendChild(paceInp);
-  sheet.appendChild(paceWrap);
+  paceWrap.appendChild(el('input', { type:'range', min:'0.5', max:'1.0', step:'0.1', value:p.goalRateLbPerWk, style:{width:'100%'},
+    onInput: e => { p.goalRateLbPerWk = parseFloat(e.target.value); paceWrap.firstChild.textContent = `Goal pace: ${p.goalRateLbPerWk.toFixed(1)} lb/wk`; } }));
+  wrap.appendChild(paceWrap);
 
   const actWrap = el('div', { style:{marginBottom:'12px'} });
   actWrap.appendChild(el('label', { class:'field-label' }, 'Activity baseline'));
   const actRow = el('div', { style:{display:'flex', gap:'8px'} });
   [[1.3,'Lighter'],[1.45,'Typical'],[1.6,'Very active']].forEach(([v,l]) => {
     actRow.appendChild(el('button', { style:{flex:1, border:`1px solid ${p.activityBase===v?'var(--berry)':'var(--line)'}`, background: p.activityBase===v?'var(--berry-soft)':'#fff', borderRadius:'10px', padding:'8px 4px', fontSize:'11.5px', cursor:'pointer'},
-      onClick: () => { p.activityBase = v; render2(); } }, `${v}\n${l}`));
+      onClick: () => { p.activityBase = v; state.profile = Object.assign({}, state.profile, p); render(); } }, `${v}\n${l}`));
   });
   actWrap.appendChild(actRow);
-  sheet.appendChild(actWrap);
-  function render2() { closeSheet(); openSheet(() => { const s = SettingsSheet(); Object.assign(p, p); return s; }); }
+  wrap.appendChild(actWrap);
 
-  sheet.appendChild(el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginBottom:'12px'} },
+  wrap.appendChild(el('div', { style:{fontSize:'11px', color:'var(--ink-soft)', marginBottom:'12px'} },
     'Targets recompute from these numbers using §7.1. You can also override targets directly by importing a plan.json from Coach.'));
-
-  sheet.appendChild(DropboxCard());
-  sheet.appendChild(el('button', { class:'btn-primary', style:{width:'100%'}, onClick: () => {
+  wrap.appendChild(el('button', { class:'btn-primary', style:{width:'100%', marginBottom:'18px'}, onClick: () => {
     state.profile = p;
     const t = computeTargets(p, weightForBMR());
     state.targets = t;
-    save(); closeSheet();
+    save();
     showToast(t.clamped ? 'Target set to the 1,200 cal minimum' : 'Settings saved');
     render();
   } }, 'Save & recompute targets'));
 
-  back.appendChild(sheet);
-  return back;
+  wrap.appendChild(SectionLabel('Backup & sync'));
+  wrap.appendChild(DropboxCard());
+  wrap.appendChild(el('button', { class:'chip', style:{width:'100%', marginBottom:'8px'}, onClick: exportBackup }, 'Export backup file'));
+  wrap.appendChild(el('button', { class:'chip', style:{width:'100%', marginBottom:'8px'}, onClick: () => { route.view = 'history'; uiState.selDay = null; render(); } }, 'History & recently deleted'));
+
+  wrap.appendChild(SectionLabel('Feedback'));
+  wrap.appendChild(el('button', { class:'chip', style:{width:'100%'}, onClick: () => { if (window.berryFeedback) window.berryFeedback.open(); } }, 'Send feedback'));
+  return wrap;
 }
 
 /* ============================= Import / Export (§6) ============================= */

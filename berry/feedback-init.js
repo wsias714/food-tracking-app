@@ -13,4 +13,4 @@ const upload = configured() ? async (item) => {
   await create(`/feedback/${item.id}.json`, JSON.stringify(item));
 } : undefined;
 
-finishAuthFromUrl().catch(() => {}).finally(() => { initFeedback({ app: "berry", bottom: 84, upload }); void syncNow(); });
+finishAuthFromUrl().catch(() => {}).finally(() => { window.berryFeedback = initFeedback({ app: "berry", bottom: 84, upload }); void syncNow(); });

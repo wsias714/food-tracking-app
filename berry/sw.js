@@ -1,4 +1,4 @@
-const CACHE = 'berry-v4';
+const CACHE = 'berry-v5';
 const SHELL = [
   './',
   './index.html',
